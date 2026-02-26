@@ -1,5 +1,7 @@
 import { useState, useCallback, useEffect } from 'react';
-import { initNfc, readPaymentTag, writePaymentTag, cleanupNfc, NfcPaymentData } from '../services/nfc';
+import { AppState } from 'react-native';
+import { initNfc, checkNfcEnabled, readPaymentTag, writePaymentTag, cleanupNfc, buildSolanaPayUrl, NfcPaymentData } from '../services/nfc';
+import { startHce, stopHce } from '../services/hce';
 
 export type NfcState =
   | { status: 'idle' }
@@ -9,7 +11,9 @@ export type NfcState =
   | { status: 'writing' }
   | { status: 'success'; data: NfcPaymentData }
   | { status: 'written' }
+  | { status: 'emulating' }
   | { status: 'error'; message: string }
+  | { status: 'disabled' }
   | { status: 'unsupported' };
 
 export function useNfc() {
@@ -18,12 +22,32 @@ export function useNfc() {
 
   useEffect(() => {
     setState({ status: 'initializing' });
-    initNfc().then((supported) => {
+    initNfc().then((result) => {
+      const supported = result !== 'unsupported';
       setIsSupported(supported);
-      setState(supported ? { status: 'ready' } : { status: 'unsupported' });
+      if (result === 'ready') setState({ status: 'ready' });
+      else if (result === 'disabled') setState({ status: 'disabled' });
+      else setState({ status: 'unsupported' });
+    });
+
+    // Re-check NFC when app comes back from settings
+    const sub = AppState.addEventListener('change', (nextState) => {
+      if (nextState === 'active') {
+        checkNfcEnabled().then((enabled) => {
+          if (enabled) {
+            setIsSupported(true);
+            setState((prev) =>
+              prev.status === 'disabled' || prev.status === 'unsupported'
+                ? { status: 'ready' }
+                : prev
+            );
+          }
+        });
+      }
     });
 
     return () => {
+      sub.remove();
       cleanupNfc();
     };
   }, []);
@@ -65,9 +89,31 @@ export function useNfc() {
     [isSupported]
   );
 
-  const reset = useCallback(() => {
-    setState(isSupported ? { status: 'ready' } : { status: 'unsupported' });
+  const startEmulation = useCallback(
+    async (recipientAddress: string, amount: number, label?: string) => {
+      const url = buildSolanaPayUrl(recipientAddress, amount, label);
+      try {
+        await startHce(url);
+        setState({ status: 'emulating' });
+      } catch (err) {
+        setState({
+          status: 'error',
+          message: err instanceof Error ? err.message : 'HCE failed',
+        });
+      }
+    },
+    []
+  );
+
+  const stopEmulation = useCallback(async () => {
+    await stopHce();
+    setState(isSupported ? { status: 'ready' } : { status: 'disabled' });
   }, [isSupported]);
 
-  return { state, isSupported, startScan, writeTag, reset };
+  const reset = useCallback(() => {
+    stopHce().catch(() => {});
+    setState(isSupported ? { status: 'ready' } : { status: 'disabled' });
+  }, [isSupported]);
+
+  return { state, isSupported, startScan, writeTag, startEmulation, stopEmulation, reset };
 }
