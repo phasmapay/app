@@ -27,20 +27,20 @@ function NfcRipple({ scanning }: { scanning: boolean }) {
       ring1.value = withRepeat(withTiming(1.6, { duration: 1500, easing: Easing.out(Easing.ease) }), -1);
       ring2.value = withRepeat(
         withSequence(withTiming(1, { duration: 500 }), withTiming(1.6, { duration: 1500, easing: Easing.out(Easing.ease) })),
-        -1
+        -1,
       );
       ring3.value = withRepeat(
         withSequence(withTiming(1, { duration: 1000 }), withTiming(1.6, { duration: 1500, easing: Easing.out(Easing.ease) })),
-        -1
+        -1,
       );
       opacity1.value = withRepeat(withTiming(0, { duration: 1500 }), -1);
       opacity2.value = withRepeat(
         withSequence(withTiming(0.4, { duration: 500 }), withTiming(0, { duration: 1500 })),
-        -1
+        -1,
       );
       opacity3.value = withRepeat(
         withSequence(withTiming(0.2, { duration: 1000 }), withTiming(0, { duration: 1500 })),
-        -1
+        -1,
       );
     } else {
       ring1.value = withSpring(1);
@@ -89,29 +89,25 @@ function NfcRipple({ scanning }: { scanning: boolean }) {
         className="w-24 h-24 rounded-full items-center justify-center"
         style={{ backgroundColor: 'rgba(153,69,255,0.3)', borderWidth: 2, borderColor: '#9945FF' }}
       >
-        <View style={{ width: 40, height: 40, alignItems: 'center', justifyContent: 'center' }}>
-          <View style={{ width: 24, height: 32, borderWidth: 2, borderColor: '#9945FF', borderRadius: 4 }} />
-          <View style={{ position: 'absolute', bottom: 4, width: 8, height: 8, borderRadius: 4, backgroundColor: '#9945FF' }} />
-        </View>
+        {/* Ghost icon in the center */}
+        <Text style={{ fontSize: 32 }}>👻</Text>
       </View>
     </View>
   );
 }
 
-export default function PayScreen() {
+export default function GhostPayScreen() {
   const { publicKey, authToken } = useWallet();
   const { state: nfcState, startScan, reset: resetNfc } = useNfc();
   const { skrStatus } = useBalances(publicKey?.toBase58() ?? null);
   const { state: payState, prepare, confirm, reset: resetPay } = usePayment(
     publicKey?.toBase58() ?? null,
     authToken,
-    skrStatus.balance
+    skrStatus.balance,
   );
 
-  // Track whether we already kicked off payment from this NFC read
   const paymentStarted = React.useRef(false);
 
-  // When NFC scan succeeds, kick off payment preparation (only once)
   useEffect(() => {
     if (nfcState.status === 'success' && !paymentStarted.current) {
       paymentStarted.current = true;
@@ -119,7 +115,6 @@ export default function PayScreen() {
     }
   }, [nfcState.status]);
 
-  // When payment succeeds, navigate to receipt
   useEffect(() => {
     if (payState.status === 'success') {
       router.replace({
@@ -130,6 +125,7 @@ export default function PayScreen() {
           recipient: payState.result.recipient,
           cashback: payState.cashback.toString(),
           savedGas: payState.savedGas.toString(),
+          ghostMode: 'true',
         },
       });
     }
@@ -160,10 +156,9 @@ export default function PayScreen() {
 
     if (tapCount.value >= 3) {
       tapCount.value = 0;
-      // Fire mock payment with a demo address and $1.00
       const mockData = mockNfcRead(
-        '7xKXtg2CW87d97TXJSDpbD5jBkheTqA3esVKk3X7DHhP', // demo recipient
-        1.00
+        '7xKXtg2CW87d97TXJSDpbD5jBkheTqA3esVKk3X7DHhP',
+        1.00,
       );
       prepare(mockData);
     }
@@ -177,20 +172,20 @@ export default function PayScreen() {
     (payState.status === 'error' && payState.message) || '';
 
   const getStatusText = () => {
-    if (isScanning) return 'Hold near NFC tag...';
+    if (isScanning) return 'Hold near Ghost NFC tag...';
     if (payState.status === 'optimizing') return 'AI optimizing route...';
     if (payState.status === 'signing') return 'Approve in wallet...';
     if (payState.status === 'confirming') return 'Confirming on Solana...';
     if (hasError) return errorMessage;
-    return 'Tap to scan NFC tag';
+    return 'Tap to scan Ghost NFC tag';
   };
 
   return (
     <SafeAreaView className="flex-1 bg-[#0a0a0a]">
       <View className="flex-1 px-5 pt-6 items-center">
-        <Text className="text-white text-3xl font-bold mb-2 self-start">Pay</Text>
+        <Text className="text-white text-3xl font-bold mb-2 self-start">Ghost Pay</Text>
         <Text className="text-[#888] text-sm mb-10 self-start">
-          Tap your phone to an NFC payment tag
+          Private one-time address payment
         </Text>
 
         {/* NFC Animation */}
@@ -209,11 +204,31 @@ export default function PayScreen() {
         {/* Payment confirmation card */}
         {payState.status === 'awaiting_approval' && (
           <View className="w-full bg-[#141414] rounded-3xl p-5 mt-6 border border-[#9945FF]">
-            <Text className="text-[#888] text-xs uppercase tracking-widest mb-3">Confirm Payment</Text>
+            <Text className="text-[#888] text-xs uppercase tracking-widest mb-3">Confirm Ghost Payment</Text>
+
+            {/* Ghost Mode badge */}
+            <View style={{
+              flexDirection: 'row', alignItems: 'center',
+              backgroundColor: 'rgba(153,69,255,0.15)', borderRadius: 8,
+              padding: 8, marginBottom: 12,
+            }}>
+              <Text style={{ color: '#9945FF', fontSize: 13, fontWeight: '600' }}>
+                👻 Ghost Mode — one-time address
+              </Text>
+            </View>
+
             <View className="flex-row justify-between mb-3">
               <Text className="text-[#888]">Amount</Text>
               <Text className="text-white font-bold text-lg">
                 ${payState.paymentData.amount.toFixed(2)} USDC
+              </Text>
+            </View>
+            <View className="flex-row justify-between mb-3">
+              <Text className="text-[#888]">Recipient</Text>
+              <Text className="text-[#555] text-sm" numberOfLines={1}>
+                {payState.paymentData.recipient
+                  ? `${payState.paymentData.recipient.slice(0, 6)}...${payState.paymentData.recipient.slice(-4)} (stealth)`
+                  : '—'}
               </Text>
             </View>
             <View className="flex-row justify-between mb-4">
@@ -279,19 +294,19 @@ export default function PayScreen() {
                     ? () => Alert.alert(
                         'NFC is Disabled',
                         'Please enable NFC in your device settings before continuing.',
-                        [{ text: 'OK' }]
+                        [{ text: 'OK' }],
                       )
                     : nfcState.status === 'unsupported'
                     ? () => Alert.alert(
                         'NFC Not Supported',
                         'Your device does not have NFC hardware. NFC tap-to-pay requires a device with NFC.',
-                        [{ text: 'OK' }]
+                        [{ text: 'OK' }],
                       )
                     : startScan
                 }
               >
                 <Text className="text-white font-bold text-lg">
-                  Scan NFC Tag
+                  👻 Scan Ghost Tag
                 </Text>
               </TouchableOpacity>
             )}

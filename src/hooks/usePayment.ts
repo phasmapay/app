@@ -1,12 +1,15 @@
+import { Buffer } from 'buffer';
 import { useState, useCallback } from 'react';
-import { PublicKey } from '@solana/web3.js';
+import { PublicKey, Transaction, VersionedTransaction } from '@solana/web3.js';
 import { getConnection } from '../utils/solana';
 import { executePayment, PaymentResult } from '../services/payment';
 import { optimizePayment, OptimizationResult } from '../services/agent';
 import { calculateCashback } from '../services/skr';
 import { saveTransaction } from '../services/storage';
+import { trackPaymentWithTorque } from '../services/torque';
 import { USDC_MINT } from '../utils/constants';
 import { NfcPaymentData } from '../services/nfc';
+import { signTransaction } from '../services/signer';
 
 export type PaymentState =
   | { status: 'idle' }
@@ -67,16 +70,47 @@ export function usePayment(
 
     setState({ status: 'signing' });
     try {
-      const connection = getConnection();
-      const usdcMint = new PublicKey(USDC_MINT);
+      let result: PaymentResult;
 
-      const result = await executePayment(
-        connection,
-        paymentData.recipient,
-        paymentData.amount,
-        usdcMint,
-        authToken!
-      );
+      if (optimization.strategy === 'swap' && optimization.swapTxData) {
+        const { swapTransaction } = optimization.swapTxData;
+        const connection = getConnection();
+
+        // Jupiter v6 returns a VersionedTransaction even with asLegacyTransaction:true.
+        // Deserialize as legacy Transaction for MWA/SeedVault signing compatibility.
+        const txBuffer = Buffer.from(swapTransaction, 'base64');
+        let tx: Transaction;
+        try {
+          tx = Transaction.from(txBuffer);
+        } catch {
+          // Fallback: deserialize as VersionedTransaction and extract legacy message
+          const vtx = VersionedTransaction.deserialize(txBuffer);
+          const legacyMsg = vtx.message;
+          // Re-serialize the inner legacy message bytes as a Transaction
+          tx = Transaction.from(Buffer.from(legacyMsg.serialize()));
+        }
+        const signed = await signTransaction(tx);
+        const signature = await connection.sendRawTransaction(signed.serialize());
+
+        result = {
+          signature,
+          sender: walletAddress!,
+          recipient: paymentData.recipient,
+          amount: paymentData.amount,
+          timestamp: Date.now(),
+        };
+      } else {
+        const connection = getConnection();
+        const usdcMint = new PublicKey(USDC_MINT);
+        result = await executePayment(
+          connection,
+          paymentData.recipient,
+          paymentData.amount,
+          usdcMint,
+          undefined,
+          walletAddress!
+        );
+      }
 
       setState({ status: 'confirming', signature: result.signature });
 
@@ -89,6 +123,9 @@ export function usePayment(
         strategy: optimization.strategy as 'direct' | 'swap',
       });
 
+      // Track payment with Torque loyalty (non-blocking)
+      trackPaymentWithTorque(result.signature, paymentData.amount).catch(() => {});
+
       setState({
         status: 'success',
         result,
@@ -96,12 +133,13 @@ export function usePayment(
         savedGas: optimization.savedGas,
       });
     } catch (err) {
+      console.error('[Payment] confirm failed:', err);
       setState({
         status: 'error',
         message: err instanceof Error ? err.message : 'Payment failed',
       });
     }
-  }, [state, authToken, skrBalance]);
+  }, [state, walletAddress, skrBalance]);
 
   const reset = useCallback(() => {
     setState({ status: 'idle' });

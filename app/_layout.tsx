@@ -18,18 +18,11 @@ export default function RootLayout() {
           }}
         >
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-          <Stack.Screen
-            name="pay"
-            options={{ title: 'Pay', presentation: 'modal' }}
-          />
-          <Stack.Screen
-            name="receive"
-            options={{ title: 'Receive', presentation: 'modal' }}
-          />
-          <Stack.Screen
-            name="receipt/[signature]"
-            options={{ title: 'Receipt', presentation: 'modal' }}
-          />
+          <Stack.Screen name="pay" options={{ title: 'Pay', presentation: 'modal' }} />
+          <Stack.Screen name="receive" options={{ title: 'Receive', presentation: 'modal' }} />
+          <Stack.Screen name="receipt/[signature]" options={{ title: 'Receipt', presentation: 'modal' }} />
+          <Stack.Screen name="ghost-pay" options={{ title: 'Ghost Pay', presentation: 'modal' }} />
+          <Stack.Screen name="ghost-receive" options={{ title: 'Ghost Receive', presentation: 'modal' }} />
         </Stack>
       </WalletProvider>
     </SafeAreaProvider>

@@ -1,7 +1,11 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { View, Text, TouchableOpacity, Linking, Share } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import Animated, {
+  useSharedValue, useAnimatedStyle, withSpring, withTiming,
+  withDelay, Easing,
+} from 'react-native-reanimated';
 import { explorerUrl } from '../../src/utils/solana';
 import { SOLANA_NETWORK } from '../../src/utils/constants';
 
@@ -18,6 +22,24 @@ export default function ReceiptScreen() {
   const cashback = parseFloat(params.cashback ?? '0');
   const savedGas = parseFloat(params.savedGas ?? '0');
 
+  const scale = useSharedValue(0);
+  const opacity = useSharedValue(0);
+  const checkScale = useSharedValue(0);
+
+  useEffect(() => {
+    scale.value = withSpring(1, { damping: 12, stiffness: 180 });
+    opacity.value = withTiming(1, { duration: 300 });
+    checkScale.value = withDelay(200, withSpring(1, { damping: 10, stiffness: 200 }));
+  }, []);
+
+  const circleStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+    opacity: opacity.value,
+  }));
+  const checkStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: checkScale.value }],
+  }));
+
   const handleViewExplorer = () => {
     Linking.openURL(explorerUrl(params.signature, SOLANA_NETWORK));
   };
@@ -31,8 +53,17 @@ export default function ReceiptScreen() {
   return (
     <SafeAreaView className="flex-1 bg-[#0a0a0a]">
       <View className="flex-1 px-5 pt-8 items-center">
-        <Text style={{ fontSize: 72 }}>✅</Text>
-        <Text className="text-white text-3xl font-bold mt-4">Payment Sent!</Text>
+        <Animated.View
+          style={[circleStyle, {
+            width: 96, height: 96, borderRadius: 48,
+            backgroundColor: 'rgba(20,241,149,0.15)',
+            borderWidth: 2, borderColor: '#14F195',
+            alignItems: 'center', justifyContent: 'center',
+          }]}
+        >
+          <Animated.Text style={[checkStyle, { fontSize: 48 }]}>✓</Animated.Text>
+        </Animated.View>
+        <Text className="text-white text-3xl font-bold mt-4" style={{ textShadowColor: 'rgba(20,241,149,0.3)', textShadowOffset: {width:0,height:0}, textShadowRadius: 20 }}>Payment Sent!</Text>
         <Text className="text-[#888] text-sm mt-2">Transaction confirmed on Solana</Text>
 
         <View className="w-full bg-[#141414] rounded-3xl p-6 mt-8 border border-[#1f1f1f]">
@@ -45,7 +76,7 @@ export default function ReceiptScreen() {
             <View className="flex-row justify-between mb-4">
               <Text className="text-[#888]">AI Gas Savings</Text>
               <Text className="text-[#14F195] font-bold">
-                -${(savedGas * 100).toFixed(3)}
+                -${savedGas.toFixed(5)}
               </Text>
             </View>
           )}
@@ -68,10 +99,11 @@ export default function ReceiptScreen() {
         </View>
 
         <TouchableOpacity
-          className="w-full bg-[#141414] rounded-2xl py-4 items-center mt-4 border border-[#1f1f1f]"
+          className="w-full bg-[#141414] rounded-2xl py-4 items-center mt-4"
+          style={{ borderWidth: 1, borderColor: '#9945FF' }}
           onPress={handleViewExplorer}
         >
-          <Text className="text-[#9945FF] font-semibold">View on Solana Explorer</Text>
+          <Text style={{ color: '#9945FF', fontWeight: '600' }}>View on Solana Explorer</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -83,7 +115,7 @@ export default function ReceiptScreen() {
 
         <TouchableOpacity
           className="w-full rounded-2xl py-4 items-center mt-3"
-          style={{ backgroundColor: '#9945FF' }}
+          style={{ backgroundColor: '#9945FF', shadowColor: '#9945FF', shadowOpacity: 0.4, shadowRadius: 12, shadowOffset: { width: 0, height: 0 }, elevation: 8 }}
           onPress={() => router.replace('/')}
         >
           <Text className="text-white font-bold">Done</Text>

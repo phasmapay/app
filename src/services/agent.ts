@@ -1,7 +1,7 @@
 import { Connection, PublicKey } from '@solana/web3.js';
 import { getAssociatedTokenAddressSync } from '@solana/spl-token';
 import { buildUsdcTransferTx } from './payment';
-import { getSwapQuote, getSolToUsdcQuote } from './jupiter';
+import { getSwapQuote, getSolToUsdcQuote, buildSwapTx } from './jupiter';
 import { SOL_MINT, USDC_DECIMALS } from '../utils/constants';
 
 export type PaymentStrategy = 'direct' | 'swap' | 'insufficient';
@@ -11,6 +11,7 @@ export type OptimizationResult = {
   savedGas: number; // in USD
   estimatedFee: number; // in USD
   swapQuote?: Awaited<ReturnType<typeof getSwapQuote>>;
+  swapTxData?: { swapTransaction: string; lastValidBlockHeight: number };
   tx?: Awaited<ReturnType<typeof buildUsdcTransferTx>>;
   reason: string;
 };
@@ -65,11 +66,13 @@ export async function optimizePayment(
       const swapOutputUsdc = Number(swapQuote.outAmount) / 10 ** USDC_DECIMALS;
 
       if (swapOutputUsdc >= usdcAmount) {
+        const swapTxData = await buildSwapTx(swapQuote, senderPubkey.toBase58());
         return {
           strategy: 'swap',
           savedGas: 0, // swap is more expensive but necessary
           estimatedFee: DIRECT_TRANSFER_FEE_USD + SWAP_OVERHEAD_USD,
           swapQuote,
+          swapTxData,
           reason: `Auto-swap SOL→USDC (${solBalanceUi.toFixed(4)} SOL available)`,
         };
       }
@@ -88,5 +91,6 @@ export async function optimizePayment(
 
 export function formatSavings(savedGas: number): string {
   if (savedGas <= 0) return '';
-  return `AI saved you $${(savedGas * 100).toFixed(3)} in gas`;
+  // savedGas is in USD (e.g. 0.00037) — display as fractional cents
+  return `AI saved you $${savedGas.toFixed(5)} in gas`;
 }
