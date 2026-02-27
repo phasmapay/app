@@ -1,14 +1,20 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
-  View, Text, TextInput, TouchableOpacity, ActivityIndicator, Alert, KeyboardAvoidingView, Platform, Share,
+  View, Text, TextInput, TouchableOpacity, Alert, KeyboardAvoidingView, Platform, Share,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Animated, {
-  useSharedValue, useAnimatedStyle, withRepeat, withTiming, withSequence,
+  useSharedValue, useAnimatedStyle, withRepeat, withTiming, withSequence, withSpring,
 } from 'react-native-reanimated';
+import { PublicKey } from '@solana/web3.js';
+import { router } from 'expo-router';
 import { useWallet } from '../src/context/WalletContext';
 import { useNfc } from '../src/hooks/useNfc';
 import { buildSolanaPayUrl } from '../src/services/nfc';
+import { getUsdcBalance } from '../src/services/payment';
+import { saveTransaction } from '../src/services/storage';
+import { getConnection } from '../src/utils/solana';
+import { USDC_MINT } from '../src/utils/constants';
 
 export default function ReceiveScreen() {
   const { publicKey } = useWallet();
@@ -16,19 +22,83 @@ export default function ReceiveScreen() {
   const [amount, setAmount] = useState('');
   const [isFocused, setIsFocused] = useState(false);
 
+  const [receivedAmount, setReceivedAmount] = useState<number | null>(null);
+  const baseBalanceRef = useRef<number | null>(null);
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const isReady = state.status === 'emulating'; // waiting for payment via HCE
+
   const pulseScale = useSharedValue(1);
   const pulseStyle = useAnimatedStyle(() => ({
     transform: [{ scale: pulseScale.value }],
   }));
 
-  // Stop emulation on unmount
+  // Start polling when tag is written; stop on unmount or reset
   useEffect(() => {
-    return () => {
-      stopEmulation();
-    };
-  }, [stopEmulation]);
+    if (isReady && publicKey && receivedAmount === null) {
+      const connection = getConnection();
+      const mint = new PublicKey(USDC_MINT);
 
-  const handleStartEmulation = async () => {
+      // Snapshot baseline balance before polling
+      getUsdcBalance(connection, publicKey, mint).then((bal) => {
+        baseBalanceRef.current = bal;
+      });
+
+      pollRef.current = setInterval(async () => {
+        const current = await getUsdcBalance(connection, publicKey, mint);
+        const base = baseBalanceRef.current ?? 0;
+        if (current > base) {
+          clearInterval(pollRef.current!);
+          pollRef.current = null;
+          pulseScale.value = withSpring(1);
+          reset();
+          const received = current - base;
+
+          // Fetch the latest tx signature for this account
+          let txSig = '';
+          let sender = '';
+          try {
+            const sigs = await connection.getSignaturesForAddress(publicKey, { limit: 1 });
+            if (sigs.length > 0) {
+              txSig = sigs[0].signature;
+            }
+          } catch {}
+
+          saveTransaction({
+            signature: txSig,
+            sender,
+            recipient: publicKey.toBase58(),
+            amount: received,
+            timestamp: Date.now(),
+            savedGas: 0,
+            cashback: 0,
+            strategy: 'received',
+            type: 'received',
+          }).catch(() => {});
+          router.replace({
+            pathname: '/receipt/[signature]',
+            params: {
+              signature: txSig,
+              amount: received.toString(),
+              recipient: '',
+              cashback: '0',
+              savedGas: '0',
+              received: 'true',
+            },
+          });
+        }
+      }, 3000);
+    } else {
+      if (pollRef.current) {
+        clearInterval(pollRef.current);
+        pollRef.current = null;
+      }
+    }
+    return () => {
+      if (pollRef.current) clearInterval(pollRef.current);
+    };
+  }, [isReady, publicKey]);
+
+  const handleWriteTag = async () => {
     if (!publicKey) {
       Alert.alert('Error', 'Connect wallet first');
       return;
@@ -38,21 +108,20 @@ export default function ReceiveScreen() {
       Alert.alert('Error', 'Enter a valid amount');
       return;
     }
-
     pulseScale.value = withRepeat(
       withSequence(withTiming(1.08, { duration: 600 }), withTiming(1, { duration: 600 })),
       -1
     );
-
     await startEmulation(publicKey.toBase58(), parsedAmount);
   };
 
   const handleStop = () => {
     pulseScale.value = withTiming(1);
+    setReceivedAmount(null);
+    baseBalanceRef.current = null;
+    stopEmulation();
     reset();
   };
-
-  const isEmulating = state.status === 'emulating';
 
   return (
     <SafeAreaView className="flex-1 bg-[#0a0a0a]">
@@ -77,14 +146,14 @@ export default function ReceiveScreen() {
                 keyboardType="decimal-pad"
                 placeholder="0.00"
                 placeholderTextColor="#333"
-                editable={!isEmulating}
+                editable={!isReady}
                 onFocus={() => setIsFocused(true)}
                 onBlur={() => setIsFocused(false)}
               />
             </View>
           </View>
 
-          {publicKey && parseFloat(amount) > 0 && !isEmulating && (
+          {publicKey && parseFloat(amount) > 0 && !isReady && (
             <View className="bg-[#141414] rounded-2xl p-4 mb-4 border border-[#1f1f1f]">
               <Text className="text-[#888] text-xs uppercase tracking-widest mb-2">Payment URL</Text>
               <Text className="text-[#555] text-xs" numberOfLines={2} selectable>
@@ -98,24 +167,40 @@ export default function ReceiveScreen() {
               <View
                 className="w-40 h-40 rounded-full items-center justify-center border-2"
                 style={{
-                  borderColor: isEmulating ? '#14F195' : '#9945FF',
-                  backgroundColor: isEmulating ? 'rgba(20,241,149,0.1)' : 'rgba(153,69,255,0.1)',
+                  borderColor: isReady ? '#14F195' : '#9945FF',
+                  backgroundColor: isReady ? 'rgba(20,241,149,0.1)' : 'rgba(153,69,255,0.1)',
                 }}
               >
-                <Text style={{ fontSize: 20, color: isEmulating ? '#14F195' : '#9945FF', fontWeight: '700' }}>
-                  {isEmulating ? 'TAP' : 'NFC'}
+                <Text style={{ fontSize: 20, color: isReady ? '#14F195' : '#9945FF', fontWeight: '700' }}>
+                  {isReady ? 'TAP' : 'NFC'}
                 </Text>
                 <Text
                   className="text-sm font-semibold mt-2"
-                  style={{ color: isEmulating ? '#14F195' : '#9945FF' }}
+                  style={{ color: isReady ? '#14F195' : '#9945FF' }}
                 >
-                  {isEmulating ? 'Ready to receive' : 'Idle'}
+                  {isReady ? 'Ready' : 'Idle'}
                 </Text>
               </View>
             </Animated.View>
           </View>
 
-          {isEmulating ? (
+          {receivedAmount !== null ? (
+            <View style={{ backgroundColor: '#141414', borderRadius: 24, padding: 20, borderWidth: 1, borderColor: '#14F195', alignItems: 'center' }}>
+              <Text style={{ fontSize: 40, marginBottom: 8 }}>✅</Text>
+              <Text style={{ color: '#14F195', fontSize: 22, fontWeight: '700', marginBottom: 4 }}>
+                Payment Received!
+              </Text>
+              <Text style={{ color: '#fff', fontSize: 32, fontWeight: '700', marginBottom: 20 }}>
+                ${receivedAmount.toFixed(2)} USDC
+              </Text>
+              <TouchableOpacity
+                style={{ backgroundColor: '#1f1f1f', borderRadius: 14, paddingVertical: 14, paddingHorizontal: 40 }}
+                onPress={handleStop}
+              >
+                <Text style={{ color: '#888', fontWeight: '600' }}>New Payment</Text>
+              </TouchableOpacity>
+            </View>
+          ) : isReady ? (
             <View className="items-center">
               <Text className="text-[#14F195] text-base font-semibold mb-2">
                 Tap customer's phone to receive ${parseFloat(amount).toFixed(2)}
@@ -157,9 +242,9 @@ export default function ReceiveScreen() {
                 shadowOffset: { width: 0, height: 0 },
                 elevation: 10,
               }}
-              onPress={handleStartEmulation}
+              onPress={handleWriteTag}
             >
-              <Text className="text-white font-bold text-lg">Start Tap-to-Pay</Text>
+              <Text className="text-white font-bold text-lg">Ready to Receive</Text>
             </TouchableOpacity>
           )}
 

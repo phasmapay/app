@@ -16,11 +16,13 @@ export default function ReceiptScreen() {
     recipient: string;
     cashback: string;
     savedGas: string;
+    received: string;
   }>();
 
   const amount = parseFloat(params.amount ?? '0');
   const cashback = parseFloat(params.cashback ?? '0');
   const savedGas = parseFloat(params.savedGas ?? '0');
+  const isReceived = params.received === 'true';
 
   const scale = useSharedValue(0);
   const opacity = useSharedValue(0);
@@ -63,8 +65,12 @@ export default function ReceiptScreen() {
         >
           <Animated.Text style={[checkStyle, { fontSize: 48 }]}>✓</Animated.Text>
         </Animated.View>
-        <Text className="text-white text-3xl font-bold mt-4" style={{ textShadowColor: 'rgba(20,241,149,0.3)', textShadowOffset: {width:0,height:0}, textShadowRadius: 20 }}>Payment Sent!</Text>
-        <Text className="text-[#888] text-sm mt-2">Transaction confirmed on Solana</Text>
+        <Text className="text-white text-3xl font-bold mt-4" style={{ textShadowColor: 'rgba(20,241,149,0.3)', textShadowOffset: {width:0,height:0}, textShadowRadius: 20 }}>
+          {isReceived ? 'Payment Received!' : 'Payment Sent!'}
+        </Text>
+        <Text className="text-[#888] text-sm mt-2">
+          {isReceived ? 'USDC arrived in your wallet' : 'Transaction confirmed on Solana'}
+        </Text>
 
         <View className="w-full bg-[#141414] rounded-3xl p-6 mt-8 border border-[#1f1f1f]">
           <View className="flex-row justify-between mb-4">
@@ -90,28 +96,34 @@ export default function ReceiptScreen() {
             </View>
           )}
 
-          <View className="border-t border-[#1f1f1f] pt-4">
-            <Text className="text-[#888] text-xs mb-1">Transaction</Text>
-            <Text className="text-[#555] text-xs" numberOfLines={1}>
-              {params.signature}
-            </Text>
-          </View>
+          {params.signature ? (
+            <View className="border-t border-[#1f1f1f] pt-4">
+              <Text className="text-[#888] text-xs mb-1">Transaction</Text>
+              <Text className="text-[#555] text-xs" numberOfLines={1}>
+                {params.signature}
+              </Text>
+            </View>
+          ) : null}
         </View>
 
-        <TouchableOpacity
-          className="w-full bg-[#141414] rounded-2xl py-4 items-center mt-4"
-          style={{ borderWidth: 1, borderColor: '#9945FF' }}
-          onPress={handleViewExplorer}
-        >
-          <Text style={{ color: '#9945FF', fontWeight: '600' }}>View on Solana Explorer</Text>
-        </TouchableOpacity>
+        {params.signature ? (
+          <>
+            <TouchableOpacity
+              className="w-full bg-[#141414] rounded-2xl py-4 items-center mt-4"
+              style={{ borderWidth: 1, borderColor: '#9945FF' }}
+              onPress={handleViewExplorer}
+            >
+              <Text style={{ color: '#9945FF', fontWeight: '600' }}>View on Solscan</Text>
+            </TouchableOpacity>
 
-        <TouchableOpacity
-          className="w-full bg-[#141414] rounded-2xl py-4 items-center mt-3 border border-[#1f1f1f]"
-          onPress={handleShare}
-        >
-          <Text className="text-[#888] font-semibold">Share Receipt</Text>
-        </TouchableOpacity>
+            <TouchableOpacity
+              className="w-full bg-[#141414] rounded-2xl py-4 items-center mt-3 border border-[#1f1f1f]"
+              onPress={handleShare}
+            >
+              <Text className="text-[#888] font-semibold">Share Receipt</Text>
+            </TouchableOpacity>
+          </>
+        ) : null}
 
         <TouchableOpacity
           className="w-full rounded-2xl py-4 items-center mt-3"

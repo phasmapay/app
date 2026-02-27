@@ -1,4 +1,5 @@
-import { Connection, PublicKey } from '@solana/web3.js';
+import { Buffer } from 'buffer';
+import { Connection, PublicKey, Transaction } from '@solana/web3.js';
 import { getAssociatedTokenAddressSync } from '@solana/spl-token';
 import { buildUsdcTransferTx } from './payment';
 import { getSwapQuote, getSolToUsdcQuote, buildSwapTx } from './jupiter';
@@ -12,7 +13,7 @@ export type OptimizationResult = {
   estimatedFee: number; // in USD
   swapQuote?: Awaited<ReturnType<typeof getSwapQuote>>;
   swapTxData?: { swapTransaction: string; lastValidBlockHeight: number };
-  tx?: Awaited<ReturnType<typeof buildUsdcTransferTx>>;
+  txBase64?: string; // serialized Transaction — survives React state (class instances don't)
   reason: string;
 };
 
@@ -26,16 +27,16 @@ export async function optimizePayment(
   usdcAmount: number,
   usdcMint: PublicKey
 ): Promise<OptimizationResult> {
-  // Check USDC balance
+  const t0 = Date.now();
+  // Fetch USDC + SOL balances in parallel
   const senderAta = getAssociatedTokenAddressSync(usdcMint, senderPubkey);
-  let usdcBalance = 0;
-  try {
-    const balance = await connection.getTokenAccountBalance(senderAta);
-    usdcBalance = Number(balance.value.uiAmount ?? 0);
-  } catch {
-    // ATA doesn't exist → 0 USDC
-    usdcBalance = 0;
-  }
+  const [usdcBalance, solBalance] = await Promise.all([
+    connection.getTokenAccountBalance(senderAta)
+      .then(b => Number(b.value.uiAmount ?? 0))
+      .catch(() => 0),
+    connection.getBalance(senderPubkey),
+  ]);
+  console.log(`[Optimize] balances in ${Date.now() - t0}ms — USDC: ${usdcBalance}, SOL: ${solBalance / 1e9}`);
 
   if (usdcBalance >= usdcAmount) {
     // Direct USDC path — cheapest
@@ -46,27 +47,34 @@ export async function optimizePayment(
       usdcAmount,
       usdcMint
     );
+    const txBase64 = Buffer.from(tx.serialize({ requireAllSignatures: false, verifySignatures: false })).toString('base64');
+    console.log(`[Optimize] direct tx built in ${Date.now() - t0}ms`);
     return {
       strategy: 'direct',
-      savedGas: SWAP_OVERHEAD_USD, // savings vs swap route
+      savedGas: SWAP_OVERHEAD_USD,
       estimatedFee: DIRECT_TRANSFER_FEE_USD,
-      tx,
+      txBase64,
       reason: `Direct USDC transfer (balance: $${usdcBalance.toFixed(2)})`,
     };
   }
 
-  // Check SOL balance for swap
-  const solBalance = await connection.getBalance(senderPubkey);
   const solBalanceUi = solBalance / 1_000_000_000;
 
   if (solBalanceUi > 0.01) {
-    // Attempt SOL → USDC swap
+    // Attempt SOL → USDC swap (5s timeout — Jupiter can be slow on devnet)
     try {
-      const swapQuote = await getSolToUsdcQuote(solBalanceUi * 0.99, usdcMint.toString());
+      const timeoutMs = 5000;
+      const swapQuote = await Promise.race([
+        getSolToUsdcQuote(solBalanceUi * 0.99, usdcMint.toString()),
+        new Promise<never>((_, reject) => setTimeout(() => reject(new Error('Jupiter timeout')), timeoutMs)),
+      ]);
       const swapOutputUsdc = Number(swapQuote.outAmount) / 10 ** USDC_DECIMALS;
 
       if (swapOutputUsdc >= usdcAmount) {
-        const swapTxData = await buildSwapTx(swapQuote, senderPubkey.toBase58());
+        const swapTxData = await Promise.race([
+          buildSwapTx(swapQuote, senderPubkey.toBase58()),
+          new Promise<never>((_, reject) => setTimeout(() => reject(new Error('Jupiter tx timeout')), timeoutMs)),
+        ]);
         return {
           strategy: 'swap',
           savedGas: 0, // swap is more expensive but necessary

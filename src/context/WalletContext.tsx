@@ -6,14 +6,22 @@ import React, {
   useEffect,
   ReactNode,
 } from 'react';
-import { transact } from '@solana-mobile/mobile-wallet-adapter-protocol-web3js';
 import { PublicKey } from '@solana/web3.js';
-import { APP_IDENTITY } from '../utils/constants';
-import { saveAuthToken, loadAuthToken, clearAuthToken } from '../services/storage';
+import {
+  connect as signerConnect,
+  disconnect as signerDisconnect,
+  getPublicKey as signerPubkey,
+  getSignerType,
+  restoreFromStorage,
+  SignerType,
+} from '../services/signer';
+import { loadAuthToken, clearAuthToken } from '../services/storage';
+import { initTorque } from '../services/torque';
 
 type WalletState = {
   publicKey: PublicKey | null;
   authToken: string | null;
+  signerType: SignerType | null;
   isConnected: boolean;
   isConnecting: boolean;
   connect: () => Promise<void>;
@@ -23,6 +31,7 @@ type WalletState = {
 const WalletContext = createContext<WalletState>({
   publicKey: null,
   authToken: null,
+  signerType: null,
   isConnected: false,
   isConnecting: false,
   connect: async () => {},
@@ -32,14 +41,17 @@ const WalletContext = createContext<WalletState>({
 export function WalletProvider({ children }: { children: ReactNode }) {
   const [publicKey, setPublicKey] = useState<PublicKey | null>(null);
   const [authToken, setAuthToken] = useState<string | null>(null);
+  const [signerType, setSignerType] = useState<SignerType | null>(null);
   const [isConnecting, setIsConnecting] = useState(false);
 
-  // Restore session on mount
+  // Restore session on mount — populate cachedSigner without opening wallet
   useEffect(() => {
     loadAuthToken().then((stored) => {
       if (stored) {
         setPublicKey(new PublicKey(stored.address));
         setAuthToken(stored.token);
+        setSignerType('mwa');
+        restoreFromStorage(stored.address, stored.token);
       }
     });
   }, []);
@@ -47,26 +59,26 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   const connect = useCallback(async () => {
     setIsConnecting(true);
     try {
-      await transact(async (wallet) => {
-        const auth = await wallet.authorize({
-          cluster: 'solana:devnet',
-          identity: APP_IDENTITY,
-        });
-        const address = auth.accounts[0].address;
-        const token = auth.auth_token;
-
-        setPublicKey(new PublicKey(address));
-        setAuthToken(token);
-        await saveAuthToken(token, address);
-      });
+      // Tries Seed Vault first (in-process, no app switch), falls back to MWA
+      const result = await signerConnect();
+      console.log(`[Wallet] Connected via ${result.type}: ${result.publicKey.toBase58()}`);
+      setPublicKey(result.publicKey);
+      setSignerType(result.type);
+      setAuthToken('connected'); // placeholder — signer manages its own auth
+      // Init Torque loyalty tracking in background (non-blocking)
+      initTorque().catch(() => {});
+    } catch (e) {
+      console.warn('[Wallet] Connect error:', String(e));
     } finally {
       setIsConnecting(false);
     }
   }, []);
 
   const disconnect = useCallback(async () => {
+    signerDisconnect();
     setPublicKey(null);
     setAuthToken(null);
+    setSignerType(null);
     await clearAuthToken();
   }, []);
 
@@ -75,6 +87,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       value={{
         publicKey,
         authToken,
+        signerType,
         isConnected: !!publicKey,
         isConnecting,
         connect,

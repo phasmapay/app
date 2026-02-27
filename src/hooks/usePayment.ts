@@ -1,15 +1,15 @@
 import { Buffer } from 'buffer';
 import { useState, useCallback } from 'react';
-import { PublicKey, Transaction, VersionedTransaction } from '@solana/web3.js';
+import { PublicKey, Transaction } from '@solana/web3.js';
 import { getConnection } from '../utils/solana';
-import { executePayment, PaymentResult } from '../services/payment';
+import { buildUsdcTransferTx, executePayment, PaymentResult } from '../services/payment';
 import { optimizePayment, OptimizationResult } from '../services/agent';
 import { calculateCashback } from '../services/skr';
 import { saveTransaction } from '../services/storage';
 import { trackPaymentWithTorque } from '../services/torque';
 import { USDC_MINT } from '../utils/constants';
 import { NfcPaymentData } from '../services/nfc';
-import { signTransaction } from '../services/signer';
+import { signAndSendMwa } from '../services/signer';
 
 export type PaymentState =
   | { status: 'idle' }
@@ -29,7 +29,7 @@ export function usePayment(
 
   const prepare = useCallback(
     async (paymentData: NfcPaymentData) => {
-      if (!walletAddress || !authToken) {
+      if (!walletAddress) {
         setState({ status: 'error', message: 'Wallet not connected' });
         return;
       }
@@ -74,24 +74,18 @@ export function usePayment(
 
       if (optimization.strategy === 'swap' && optimization.swapTxData) {
         const { swapTransaction } = optimization.swapTxData;
-        const connection = getConnection();
-
-        // Jupiter v6 returns a VersionedTransaction even with asLegacyTransaction:true.
-        // Deserialize as legacy Transaction for MWA/SeedVault signing compatibility.
-        const txBuffer = Buffer.from(swapTransaction, 'base64');
-        let tx: Transaction;
-        try {
-          tx = Transaction.from(txBuffer);
-        } catch {
-          // Fallback: deserialize as VersionedTransaction and extract legacy message
-          const vtx = VersionedTransaction.deserialize(txBuffer);
-          const legacyMsg = vtx.message;
-          // Re-serialize the inner legacy message bytes as a Transaction
-          tx = Transaction.from(Buffer.from(legacyMsg.serialize()));
-        }
-        const signed = await signTransaction(tx);
-        const signature = await connection.sendRawTransaction(signed.serialize());
-
+        // Pass base64 directly — avoids deserialization losing class methods
+        const signature = await signAndSendMwa(swapTransaction);
+        result = {
+          signature,
+          sender: walletAddress!,
+          recipient: paymentData.recipient,
+          amount: paymentData.amount,
+          timestamp: Date.now(),
+        };
+      } else if (optimization.strategy === 'direct' && optimization.txBase64) {
+        // Pass base64 directly — avoids Transaction deserialization losing class methods
+        const signature = await signAndSendMwa(optimization.txBase64);
         result = {
           signature,
           sender: walletAddress!,
@@ -100,6 +94,7 @@ export function usePayment(
           timestamp: Date.now(),
         };
       } else {
+        // Fallback: rebuild tx (should not normally reach here)
         const connection = getConnection();
         const usdcMint = new PublicKey(USDC_MINT);
         result = await executePayment(
@@ -108,7 +103,7 @@ export function usePayment(
           paymentData.amount,
           usdcMint,
           undefined,
-          walletAddress!
+          walletAddress!,
         );
       }
 
@@ -133,10 +128,19 @@ export function usePayment(
         savedGas: optimization.savedGas,
       });
     } catch (err) {
-      console.error('[Payment] confirm failed:', err);
+      console.warn('[Payment] confirm failed:', err);
+      const raw = err instanceof Error ? err.message : String(err);
+      // MWA session closed = user cancelled in wallet
+      const userCancelled =
+        raw.includes('CLOSED') ||
+        raw.includes('closed') ||
+        raw.includes('cancelled') ||
+        raw.includes('canceled') ||
+        raw.includes('user rejected') ||
+        raw.includes('User rejected');
       setState({
         status: 'error',
-        message: err instanceof Error ? err.message : 'Payment failed',
+        message: userCancelled ? 'Payment cancelled — tap Try Again to retry' : raw,
       });
     }
   }, [state, walletAddress, skrBalance]);

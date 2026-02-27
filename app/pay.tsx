@@ -135,8 +135,8 @@ export default function PayScreen() {
     }
   }, [payState.status]);
 
-  const tapCount = useSharedValue(0);
-  const lastTapTime = useSharedValue(0);
+  const tapCount = React.useRef(0);
+  const lastTapTime = React.useRef(0);
   const tapResetTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const handleReset = useCallback(() => {
@@ -148,26 +148,25 @@ export default function PayScreen() {
   const handleDevTap = useCallback(() => {
     if (payState.status !== 'idle') return;
     const now = Date.now();
-    if (now - lastTapTime.value > 800) {
-      tapCount.value = 1;
+    if (now - lastTapTime.current > 800) {
+      tapCount.current = 1;
     } else {
-      tapCount.value += 1;
+      tapCount.current += 1;
     }
-    lastTapTime.value = now;
+    lastTapTime.current = now;
 
     if (tapResetTimer.current) clearTimeout(tapResetTimer.current);
-    tapResetTimer.current = setTimeout(() => { tapCount.value = 0; }, 800);
+    tapResetTimer.current = setTimeout(() => { tapCount.current = 0; }, 800);
 
-    if (tapCount.value >= 3) {
-      tapCount.value = 0;
-      // Fire mock payment with a demo address and $1.00
+    if (tapCount.current >= 3) {
+      tapCount.current = 0;
       const mockData = mockNfcRead(
-        '7xKXtg2CW87d97TXJSDpbD5jBkheTqA3esVKk3X7DHhP', // demo recipient
+        '7xKXtg2CW87d97TXJSDpbD5jBkheTqA3esVKk3X7DHhP',
         1.00
       );
       prepare(mockData);
     }
-  }, [prepare]);
+  }, [payState.status, prepare]);
 
   const isScanning = nfcState.status === 'scanning';
   const isProcessing = ['optimizing', 'signing', 'confirming'].includes(payState.status);

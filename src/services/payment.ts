@@ -13,9 +13,9 @@ import {
   TOKEN_PROGRAM_ID,
   getAccount,
 } from '@solana/spl-token';
-import { transact } from '@solana-mobile/mobile-wallet-adapter-protocol-web3js';
-import { APP_IDENTITY, USDC_DECIMALS } from '../utils/constants';
+import { USDC_DECIMALS } from '../utils/constants';
 import { usdcToRaw } from '../utils/solana';
+import { signAndSendMwa, getPublicKey as signerPubkey } from './signer';
 
 export type PaymentResult = {
   signature: string;
@@ -81,37 +81,43 @@ export async function executePayment(
   recipientAddress: string,
   amount: number,
   usdcMint: PublicKey,
-  authToken: string
+  _authToken?: string,
+  senderAddress?: string
 ): Promise<PaymentResult> {
-  return await transact(async (wallet) => {
-    const auth = await wallet.reauthorize({
-      auth_token: authToken,
-      identity: APP_IDENTITY,
-    });
+  const senderPubkey = senderAddress
+    ? new PublicKey(senderAddress)
+    : signerPubkey()!;
 
-    const senderPubkey = new PublicKey(auth.accounts[0].address);
-    const recipientPubkey = new PublicKey(recipientAddress);
+  if (!senderPubkey) throw new Error('Wallet not connected');
 
-    const tx = await buildUsdcTransferTx(
-      connection,
-      senderPubkey,
-      recipientPubkey,
-      amount,
-      usdcMint
-    );
+  const recipientPubkey = new PublicKey(recipientAddress);
 
-    const [signature] = await wallet.signAndSendTransactions({
-      transactions: [tx],
-    });
+  // Build tx with all RPC calls BEFORE signing (stays in foreground)
+  const tx = await buildUsdcTransferTx(connection, senderPubkey, recipientPubkey, amount, usdcMint);
 
-    return {
-      signature,
-      sender: senderPubkey.toBase58(),
-      recipient: recipientAddress,
-      amount,
-      timestamp: Date.now(),
-    };
+  // Sign + send via MWA in one session — Phantom returns to app immediately
+  const signature = await signAndSendMwa(tx);
+
+  return {
+    signature,
+    sender: senderPubkey.toBase58(),
+    recipient: recipientAddress,
+    amount,
+    timestamp: Date.now(),
+  };
+}
+
+async function rpcCall(url: string, method: string, params: unknown[]): Promise<unknown> {
+  console.log('[RPC] endpoint:', url.slice(0, 40), 'method:', method);
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ jsonrpc: '2.0', id: 1, method, params }),
   });
+  const json = await res.json() as { result?: unknown; error?: { message: string } };
+  console.log('[RPC] response:', JSON.stringify(json).slice(0, 120));
+  if (json.error) throw new Error(json.error.message);
+  return json.result;
 }
 
 export async function getUsdcBalance(
@@ -121,9 +127,13 @@ export async function getUsdcBalance(
 ): Promise<number> {
   try {
     const ata = getAssociatedTokenAddressSync(usdcMint, wallet);
-    const account = await getAccount(connection, ata);
-    return Number(account.amount) / 10 ** USDC_DECIMALS;
-  } catch {
+    console.log('[USDC] ATA:', ata.toBase58(), 'mint:', usdcMint.toBase58());
+    const result = await rpcCall(connection.rpcEndpoint, 'getTokenAccountBalance', [ata.toBase58()]) as { value?: { uiAmount?: number } };
+    const bal = result?.value?.uiAmount ?? 0;
+    console.log('[USDC] balance:', bal);
+    return bal;
+  } catch (e) {
+    console.log('[USDC] error:', String(e));
     return 0;
   }
 }
@@ -132,8 +142,16 @@ export async function getSolBalance(
   connection: Connection,
   wallet: PublicKey
 ): Promise<number> {
-  const lamports = await connection.getBalance(wallet);
-  return lamports / 1_000_000_000;
+  try {
+    console.log('[SOL] wallet:', wallet.toBase58());
+    const result = await rpcCall(connection.rpcEndpoint, 'getBalance', [wallet.toBase58(), { commitment: 'confirmed' }]) as { value?: number };
+    const bal = (result?.value ?? 0) / 1_000_000_000;
+    console.log('[SOL] balance:', bal);
+    return bal;
+  } catch (e) {
+    console.log('[SOL] error:', String(e));
+    return 0;
+  }
 }
 
 export async function confirmTransaction(

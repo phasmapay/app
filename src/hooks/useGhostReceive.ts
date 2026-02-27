@@ -1,5 +1,6 @@
 import { useCallback, useRef, useState } from 'react';
 import { Connection, PublicKey } from '@solana/web3.js';
+import bs58 from 'bs58';
 import { transact } from '@solana-mobile/mobile-wallet-adapter-protocol-web3js';
 import {
   generateEphemeralKeypair,
@@ -9,7 +10,8 @@ import {
   buildSweepTx,
   pollForPayment,
 } from '../services/ghostPayment';
-import { writePaymentTag } from '../services/nfc';
+import { writePaymentTag, buildSolanaPayUrl } from '../services/nfc';
+import { startHce, stopHce } from '../services/hce';
 import { APP_IDENTITY } from '../utils/constants';
 import { getConnection } from '../utils/solana';
 
@@ -54,9 +56,15 @@ export function useGhostReceive() {
         // Step 2: persist to storage BEFORE writing NFC tag (crash-safe)
         await saveSessionKey(secretKey);
 
-        // Step 3: write NFC tag with Solana Pay URL pointing at ephemeral address
+        // Step 3: start HCE emulation (phone acts as NFC tag for phone-to-phone)
         setState({ status: 'writing', ephemeralPubkey: ephPubkey });
-        await writePaymentTag(ephPubkey, amount, 'Ghost Pay');
+        const payUrl = buildSolanaPayUrl(ephPubkey, amount, 'Ghost Pay');
+        try {
+          await startHce(payUrl);
+        } catch {
+          // HCE not available — fall back to writing a physical NFC tag
+          await writePaymentTag(ephPubkey, amount, 'Ghost Pay');
+        }
 
         // Step 4: start polling for payment
         setState({ status: 'polling', ephemeralPubkey: ephPubkey });
@@ -102,23 +110,21 @@ export function useGhostReceive() {
         // Partial sign with ephemeral keypair locally (it is the authority over source ATA)
         tx.partialSign(ephemeralKeypair);
 
-        // Encode the partially-signed tx for MWA
-        const serialized = tx.serialize({ requireAllSignatures: false, verifySignatures: false });
-
         const signature: string = await transact(async (wallet) => {
           // Reauthorize — re-use existing session token
           try {
             await wallet.reauthorize({ auth_token: authToken, identity: APP_IDENTITY });
           } catch {
-            // If reauth fails, authorize fresh (user taps approve in wallet)
             await wallet.authorize({ cluster: 'solana:devnet', identity: APP_IDENTITY });
           }
 
-          // signAndSendTransactions sends the tx and returns signatures
+          // MWA expects Transaction objects, not raw buffers
           const results = await wallet.signAndSendTransactions({
-            transactions: [serialized],
+            transactions: [tx],
+            minContextSlot: 0,
           });
-          return results[0] as unknown as string;
+          const sig = results[0];
+          return typeof sig === 'string' ? sig : bs58.encode(sig as Uint8Array);
         });
 
         await clearSessionKey();
@@ -138,6 +144,7 @@ export function useGhostReceive() {
 
   const reset = useCallback(() => {
     cancelPolling();
+    stopHce().catch(() => {});
     setState({ status: 'idle' });
   }, []);
 

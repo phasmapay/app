@@ -1,13 +1,35 @@
 import { Connection } from '@solana/web3.js';
 import { RPC_URL } from './constants';
 
+const FALLBACK_RPC_URL = 'https://api.devnet.solana.com';
+
 let _connection: Connection | null = null;
+let _connectionUrl: string | null = null;
 
 export function getConnection(): Connection {
-  if (!_connection) {
-    _connection = new Connection(RPC_URL, 'confirmed');
+  // Recreate if URL changed (e.g. env var updated between builds)
+  if (!_connection || _connectionUrl !== RPC_URL) {
+    _connection = new Connection(RPC_URL, {
+      commitment: 'confirmed',
+      confirmTransactionInitialTimeout: 60000,
+    });
+    _connectionUrl = RPC_URL;
   }
   return _connection;
+}
+
+export function resetConnection(): void {
+  _connection = null;
+  _connectionUrl = null;
+}
+
+export function getConnectionWithFallback(): Connection {
+  try {
+    return getConnection();
+  } catch {
+    resetConnection();
+    return new Connection(FALLBACK_RPC_URL, 'confirmed');
+  }
 }
 
 export function lamportsToSol(lamports: number): number {
@@ -31,6 +53,7 @@ export function shortAddress(address: string): string {
 }
 
 export function explorerUrl(signature: string, network: 'devnet' | 'mainnet-beta' = 'devnet'): string {
+  const base = network === 'devnet' ? 'https://solscan.io/tx' : 'https://solscan.io/tx';
   const cluster = network === 'devnet' ? '?cluster=devnet' : '';
-  return `https://explorer.solana.com/tx/${signature}${cluster}`;
+  return `${base}/${signature}${cluster}`;
 }
