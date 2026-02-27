@@ -116,6 +116,7 @@ export function usePayment(
         savedGas: optimization.savedGas,
         cashback,
         strategy: optimization.strategy as 'direct' | 'swap',
+        type: 'sent',
       });
 
       // Track payment with Torque loyalty (non-blocking)

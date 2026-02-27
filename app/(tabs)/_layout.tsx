@@ -1,13 +1,19 @@
 import { Tabs } from 'expo-router';
 import { View, Text } from 'react-native';
+import { HomeIcon, HomeOutlineIcon, TimeIcon, TimeOutlineIcon, SettingsIcon, SettingsOutlineIcon } from '../../src/components/Icons';
 
-function TabIcon({ focused, label, icon }: { focused: boolean; label: string; icon: string }) {
+function TabIcon({ focused, label, ActiveIcon, InactiveIcon }: {
+  focused: boolean;
+  label: string;
+  ActiveIcon: React.FC<{ size?: number; color?: string }>;
+  InactiveIcon: React.FC<{ size?: number; color?: string }>;
+}) {
+  const color = focused ? '#9945FF' : '#666';
+  const Icon = focused ? ActiveIcon : InactiveIcon;
   return (
-    <View className="items-center">
-      <Text style={{ fontSize: 20 }}>{icon}</Text>
-      <Text
-        className={`text-xs mt-0.5 ${focused ? 'text-[#9945FF]' : 'text-[#888888]'}`}
-      >
+    <View style={{ alignItems: 'center', justifyContent: 'center', width: 80, paddingTop: 4 }}>
+      <Icon size={24} color={color} />
+      <Text numberOfLines={1} style={{ fontSize: 11, marginTop: 3, color, fontWeight: focused ? '600' : '400' }}>
         {label}
       </Text>
     </View>
@@ -18,13 +24,13 @@ export default function TabLayout() {
   return (
     <Tabs
       screenOptions={{
-        headerStyle: { backgroundColor: '#0a0a0a' },
-        headerTintColor: '#FFFFFF',
+        headerShown: false,
         tabBarStyle: {
-          backgroundColor: '#141414',
-          borderTopColor: '#1f1f1f',
-          height: 80,
-          paddingBottom: 12,
+          backgroundColor: '#0a0a0a',
+          borderTopColor: '#1a1a1a',
+          borderTopWidth: 0.5,
+          height: 68,
+          paddingBottom: 4,
         },
         tabBarShowLabel: false,
       }}
@@ -32,27 +38,24 @@ export default function TabLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: 'PhasmaPay',
           tabBarIcon: ({ focused }) => (
-            <TabIcon focused={focused} label="Home" icon="👻" />
+            <TabIcon focused={focused} label="Home" ActiveIcon={HomeIcon} InactiveIcon={HomeOutlineIcon} />
           ),
         }}
       />
       <Tabs.Screen
         name="history"
         options={{
-          title: 'History',
           tabBarIcon: ({ focused }) => (
-            <TabIcon focused={focused} label="History" icon="📋" />
+            <TabIcon focused={focused} label="History" ActiveIcon={TimeIcon} InactiveIcon={TimeOutlineIcon} />
           ),
         }}
       />
       <Tabs.Screen
         name="settings"
         options={{
-          title: 'Settings',
           tabBarIcon: ({ focused }) => (
-            <TabIcon focused={focused} label="Settings" icon="⚙️" />
+            <TabIcon focused={focused} label="Settings" ActiveIcon={SettingsIcon} InactiveIcon={SettingsOutlineIcon} />
           ),
         }}
       />

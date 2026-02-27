@@ -1,0 +1,7 @@
+.beads/
+.claude/
+android/.gradle/
+android/.idea/
+android/build/
+android/app/build/
+node_modules/.cache/

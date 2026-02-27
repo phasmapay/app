@@ -249,7 +249,7 @@ export default function PayScreen() {
 
         {/* Scan / Error buttons */}
         {payState.status !== 'awaiting_approval' && (
-          <View className="absolute bottom-8 w-full px-5">
+          <View style={{ position: 'absolute', bottom: 90, left: 20, right: 20 }}>
             {hasError ? (
               <View>
                 <Text className="text-[#FF4747] text-center text-sm mb-4">{errorMessage}</Text>

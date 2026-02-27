@@ -2,7 +2,7 @@ export const SOLANA_NETWORK = (process.env.EXPO_PUBLIC_SOLANA_NETWORK ?? 'devnet
 
 export const RPC_URL = process.env.EXPO_PUBLIC_RPC_URL ?? 'https://api.devnet.solana.com';
 
-export const USDC_MINT_DEVNET = 'Gh9ZwEmdLJ8DscKNTkTqPbNwLNNBjuSzaG9Vp2KGtKJr';
+export const USDC_MINT_DEVNET = '4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU'; // Circle devnet USDC
 export const USDC_MINT_MAINNET = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
 export const SKR_MINT = process.env.EXPO_PUBLIC_SKR_MINT ?? 'SKRjqAFEbFsrqf5nfvGBHFbg1NqSrAcqgNNGvGJJiJm';
 

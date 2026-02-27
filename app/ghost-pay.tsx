@@ -1,6 +1,6 @@
 import React, { useEffect, useCallback } from 'react';
 import {
-  View, Text, TouchableOpacity, ActivityIndicator, Alert,
+  View, Text, TouchableOpacity, ActivityIndicator, Alert, Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
@@ -13,6 +13,8 @@ import { useNfc } from '../src/hooks/useNfc';
 import { mockNfcRead } from '../src/services/nfc';
 import { usePayment } from '../src/hooks/usePayment';
 import { useBalances } from '../src/hooks/useBalances';
+
+const ghostIcon = require('../ghost.png');
 
 function NfcRipple({ scanning }: { scanning: boolean }) {
   const ring1 = useSharedValue(1);
@@ -89,8 +91,7 @@ function NfcRipple({ scanning }: { scanning: boolean }) {
         className="w-24 h-24 rounded-full items-center justify-center"
         style={{ backgroundColor: 'rgba(153,69,255,0.3)', borderWidth: 2, borderColor: '#9945FF' }}
       >
-        {/* Ghost icon in the center */}
-        <Text style={{ fontSize: 32 }}>👻</Text>
+        <Image source={ghostIcon} style={{ width: 48, height: 48, tintColor: '#9945FF' }} />
       </View>
     </View>
   );
@@ -201,6 +202,7 @@ export default function GhostPayScreen() {
           {getStatusText()}
         </Text>
 
+
         {/* Payment confirmation card */}
         {payState.status === 'awaiting_approval' && (
           <View className="w-full bg-[#141414] rounded-3xl p-5 mt-6 border border-[#9945FF]">
@@ -212,8 +214,9 @@ export default function GhostPayScreen() {
               backgroundColor: 'rgba(153,69,255,0.15)', borderRadius: 8,
               padding: 8, marginBottom: 12,
             }}>
+              <Image source={ghostIcon} style={{ width: 14, height: 14, tintColor: '#9945FF', marginRight: 4 }} />
               <Text style={{ color: '#9945FF', fontSize: 13, fontWeight: '600' }}>
-                👻 Ghost Mode — one-time address
+                Ghost Mode — one-time address
               </Text>
             </View>
 
@@ -265,7 +268,7 @@ export default function GhostPayScreen() {
 
         {/* Scan / Error buttons */}
         {payState.status !== 'awaiting_approval' && (
-          <View className="absolute bottom-8 w-full px-5">
+          <View style={{ position: 'absolute', bottom: 90, left: 20, right: 20 }}>
             {hasError ? (
               <View>
                 <Text className="text-[#FF4747] text-center text-sm mb-4">{errorMessage}</Text>
@@ -306,7 +309,7 @@ export default function GhostPayScreen() {
                 }
               >
                 <Text className="text-white font-bold text-lg">
-                  👻 Scan Ghost Tag
+                  Scan Ghost Tag
                 </Text>
               </TouchableOpacity>
             )}

@@ -3,6 +3,7 @@ import {
   getAssociatedTokenAddressSync,
   createAssociatedTokenAccountIdempotentInstruction,
   createTransferCheckedInstruction,
+  createCloseAccountInstruction,
   getAccount,
   TokenAccountNotFoundError,
 } from '@solana/spl-token';
@@ -44,16 +45,22 @@ export async function buildSweepTx(
   connection: Connection,
   ephemeralKeypair: Keypair,
   merchantPubkey: PublicKey,
+  prefetchedBlockhash?: { blockhash: string; lastValidBlockHeight: number } | null,
 ): Promise<{ tx: Transaction; amount: bigint }> {
   const usdcMint = new PublicKey(USDC_MINT);
   const sourceATA = getAssociatedTokenAddressSync(usdcMint, ephemeralKeypair.publicKey);
   const destATA = getAssociatedTokenAddressSync(usdcMint, merchantPubkey);
 
-  const sourceAccount = await getAccount(connection, sourceATA);
+  const [sourceAccount, blockhashInfo] = await Promise.all([
+    getAccount(connection, sourceATA),
+    prefetchedBlockhash
+      ? Promise.resolve(prefetchedBlockhash)
+      : connection.getLatestBlockhash('confirmed'),
+  ]);
   const amount = sourceAccount.amount;
   if (amount === 0n) throw new Error('No USDC to claim');
 
-  const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash('confirmed');
+  const { blockhash, lastValidBlockHeight } = blockhashInfo;
   const tx = new Transaction({ feePayer: merchantPubkey, blockhash, lastValidBlockHeight });
 
   tx.add(ComputeBudgetProgram.setComputeUnitLimit({ units: 60_000 }));
@@ -78,6 +85,15 @@ export async function buildSweepTx(
       ephemeralKeypair.publicKey, // authority (owner of sourceATA)
       amount,
       USDC_DECIMALS,
+    ),
+  );
+
+  // Close ephemeral ATA — reclaims ~0.002 SOL rent back to merchant
+  tx.add(
+    createCloseAccountInstruction(
+      sourceATA,                    // account to close
+      merchantPubkey,               // rent destination
+      ephemeralKeypair.publicKey,   // authority (owner)
     ),
   );
 

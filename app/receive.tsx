@@ -26,6 +26,7 @@ export default function ReceiveScreen() {
   const baseBalanceRef = useRef<number | null>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const isReady = state.status === 'emulating'; // waiting for payment via HCE
+  const canStart = !!publicKey && parseFloat(amount) > 0;
 
   const pulseScale = useSharedValue(1);
   const pulseStyle = useAnimatedStyle(() => ({
@@ -223,33 +224,42 @@ export default function ReceiveScreen() {
                   <Text className="text-[#9945FF] font-semibold">Share Payment Link</Text>
                 </TouchableOpacity>
               )}
-              <TouchableOpacity
-                className="rounded-2xl py-4 px-12 items-center"
-                style={{ backgroundColor: '#1f1f1f' }}
-                onPress={handleStop}
-              >
-                <Text className="text-[#888] font-semibold">Stop</Text>
-              </TouchableOpacity>
             </View>
-          ) : (
-            <TouchableOpacity
-              className="rounded-2xl py-5 items-center"
-              style={{
-                backgroundColor: '#9945FF',
-                shadowColor: '#9945FF',
-                shadowOpacity: 0.5,
-                shadowRadius: 16,
-                shadowOffset: { width: 0, height: 0 },
-                elevation: 10,
-              }}
-              onPress={handleWriteTag}
-            >
-              <Text className="text-white font-bold text-lg">Ready to Receive</Text>
-            </TouchableOpacity>
-          )}
+          ) : null}
 
           {state.status === 'error' && (
             <Text className="text-red-500 text-center mt-4">{state.message}</Text>
+          )}
+
+          {/* Bottom button — standardized position */}
+          {receivedAmount === null && (
+            <View style={{ position: 'absolute', bottom: 90, left: 20, right: 20 }}>
+              {isReady ? (
+                <TouchableOpacity
+                  style={{ backgroundColor: '#1f1f1f', borderRadius: 18, paddingVertical: 20, alignItems: 'center' }}
+                  onPress={handleStop}
+                >
+                  <Text style={{ color: '#888', fontWeight: '700', fontSize: 17 }}>Stop</Text>
+                </TouchableOpacity>
+              ) : (
+                <TouchableOpacity
+                  style={{
+                    backgroundColor: canStart ? '#9945FF' : '#1f1f1f',
+                    borderRadius: 18, paddingVertical: 20, alignItems: 'center',
+                    shadowColor: canStart ? '#9945FF' : 'transparent',
+                    shadowOpacity: 0.5, shadowRadius: 16,
+                    shadowOffset: { width: 0, height: 0 },
+                    elevation: canStart ? 10 : 0,
+                  }}
+                  onPress={handleWriteTag}
+                  disabled={!canStart}
+                >
+                  <Text style={{ color: canStart ? '#fff' : '#444', fontWeight: '700', fontSize: 17 }}>
+                    Ready to Receive
+                  </Text>
+                </TouchableOpacity>
+              )}
+            </View>
           )}
         </View>
       </KeyboardAvoidingView>

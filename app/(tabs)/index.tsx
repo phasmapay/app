@@ -12,7 +12,7 @@ import { useBalances } from '../../src/hooks/useBalances';
 import { getTierColor } from '../../src/services/skr';
 import { shortAddress } from '../../src/utils/solana';
 import { Image, Linking } from 'react-native';
-import { ArrowUpIcon, ArrowDownIcon, ScanIcon, DiamondIcon, NotificationIcon, SolanaIcon, GhostIcon } from '../../src/components/Icons';
+import { ArrowUpIcon, ArrowDownIcon, DiamondIcon, NotificationIcon, SolanaIcon, GhostPayIcon, GhostReceiveIcon } from '../../src/components/Icons';
 
 function ActionButton({
   label, IconComponent, onPress, color,
@@ -175,10 +175,9 @@ export default function HomeScreen() {
           {/* Actions */}
           <View style={{ flexDirection: 'row', marginTop: 24, paddingTop: 20, borderTopWidth: 1, borderTopColor: '#1a1a1a' }}>
             <ActionButton label="Pay" IconComponent={ArrowUpIcon} onPress={() => router.push('/pay')} color="#9945FF" />
-            <ActionButton label="Receive" IconComponent={ArrowDownIcon} onPress={() => router.push('/receive')} color="#333" />
-            <ActionButton label="Scan" IconComponent={ScanIcon} onPress={() => router.push('/pay')} color="#333" />
-            <ActionButton label="Ghost Pay" IconComponent={GhostIcon} onPress={() => router.push('/ghost-pay')} color="#1a0a2e" />
-            <ActionButton label="Ghost Recv" IconComponent={GhostIcon} onPress={() => router.push('/ghost-receive')} color="#0a1a0e" />
+            <ActionButton label="Receive" IconComponent={ArrowDownIcon} onPress={() => router.push('/receive')} color="#0d2b1a" />
+            <ActionButton label="Ghost Pay" IconComponent={GhostPayIcon} onPress={() => router.push('/ghost-pay')} color="#2d1060" />
+            <ActionButton label="Ghost Recv" IconComponent={GhostReceiveIcon} onPress={() => router.push('/ghost-receive')} color="#0a1f14" />
           </View>
         </View>
 

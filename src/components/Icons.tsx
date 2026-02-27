@@ -1,5 +1,5 @@
 import React from 'react';
-import Svg, { Path } from 'react-native-svg';
+import Svg, { Path, Circle, Ellipse } from 'react-native-svg';
 
 type IconProps = { size?: number; color?: string };
 
@@ -55,26 +55,31 @@ export function SettingsOutlineIcon({ size = 24, color = '#fff' }: IconProps) {
   );
 }
 
+// Diagonal arrow up-right (send / pay)
 export function ArrowUpIcon({ size = 24, color = '#fff' }: IconProps) {
   return (
-    <Svg width={size} height={size} viewBox="0 0 512 512" fill="none">
-      <Path d="M256 48l-160 160h112v256h96V208h112z" fill={color} />
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path d="M7 17L17 7M17 7H8M17 7v9" stroke={color} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
     </Svg>
   );
 }
 
+// Diagonal arrow down-left (receive)
 export function ArrowDownIcon({ size = 24, color = '#fff' }: IconProps) {
   return (
-    <Svg width={size} height={size} viewBox="0 0 512 512" fill="none">
-      <Path d="M256 464l160-160H304V48h-96v256H96z" fill={color} />
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path d="M17 7L7 17M7 17h9M7 17V8" stroke={color} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
     </Svg>
   );
 }
 
+// Scan / QR viewfinder with center dot
 export function ScanIcon({ size = 24, color = '#fff' }: IconProps) {
   return (
-    <Svg width={size} height={size} viewBox="0 0 512 512" fill="none">
-      <Path d="M336 448h56a56 56 0 0056-56v-56M448 176v-56a56 56 0 00-56-56h-56M176 448h-56a56 56 0 01-56-56v-56M64 176v-56a56 56 0 0156-56h56" stroke={color} strokeWidth="32" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path d="M7 3H4a1 1 0 00-1 1v3M17 3h3a1 1 0 011 1v3M21 17v3a1 1 0 01-1 1h-3M7 21H4a1 1 0 01-1-1v-3" stroke={color} strokeWidth="2" strokeLinecap="round" />
+      <Circle cx="12" cy="12" r="2.5" fill={color} />
+      <Path d="M12 8v1M12 15v1M8 12h1M15 12h1" stroke={color} strokeWidth="1.5" strokeLinecap="round" />
     </Svg>
   );
 }
@@ -103,21 +108,54 @@ export function NotificationIcon({ size = 24, color = '#fff' }: IconProps) {
   );
 }
 
+// Correct Solana logo — 3 left-leaning parallelogram bars
 export function SolanaIcon({ size = 24, color = '#14F195' }: IconProps) {
   return (
-    <Svg width={size} height={size} viewBox="0 0 512 512" fill="none">
-      <Path d="M116 352h312l-68 68H48z" fill={color} />
-      <Path d="M116 160h312l-68-68H48z" fill={color} />
-      <Path d="M396 256H84l68-68h312z" fill={color} />
+    <Svg width={size} height={size} viewBox="0 0 397.7 311.7" fill="none">
+      <Path d="M64.6 237.9a11.5 11.5 0 018.1-3.4h317.4c5.1 0 7.7 6.2 4.1 9.8l-52.6 52.6a11.5 11.5 0 01-8.1 3.4H15.1c-5.1 0-7.7-6.2-4.1-9.8l53.6-52.6z" fill={color} />
+      <Path d="M64.6 3.4A11.8 11.8 0 0172.7 0h317.4c5.1 0 7.7 6.2 4.1 9.8L341.6 62.4a11.5 11.5 0 01-8.1 3.4H15.1c-5.1 0-7.7-6.2-4.1-9.8L64.6 3.4z" fill={color} />
+      <Path d="M333.1 120.1a11.5 11.5 0 00-8.1-3.4H7.5c-5.1 0-7.7 6.2-4.1 9.8l52.6 52.6a11.5 11.5 0 008.1 3.4h317.5c5.1 0 7.7-6.2 4.1-9.8l-52.6-52.6z" fill={color} />
     </Svg>
   );
 }
 
+// Ghost base shape
 export function GhostIcon({ size = 24, color = '#fff' }: IconProps) {
   return (
-    <Svg width={size} height={size} viewBox="0 0 512 512" fill="none">
-      <Path d="M256 48C141.13 48 48 141.13 48 256v208l64-64 64 64 64-64 64 64 64-64V256c0-114.87-93.13-208-208-208z" fill={color} />
-      <Path d="M176 288a24 24 0 1024-24 24 24 0 00-24 24zM312 288a24 24 0 1024-24 24 24 0 00-24 24z" fill="#0a0a0a" />
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path d="M12 2C7.03 2 3 6.03 3 11v10l2.5-2.5L8 21l2.5-2.5L13 21l2.5-2.5L18 21l2.5-2.5V11C20.5 6.03 16.97 2 12 2z" fill={color} />
+      <Circle cx="9.5" cy="11" r="1.5" fill="#0a0a0a" />
+      <Circle cx="14.5" cy="11" r="1.5" fill="#0a0a0a" />
+    </Svg>
+  );
+}
+
+// Ghost Pay — ghost with up-right arrow (send privately)
+export function GhostPayIcon({ size = 24, color = '#fff' }: IconProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      {/* Ghost body */}
+      <Path d="M10 2C5.58 2 2 5.58 2 10v9l2-2 2 2 2-2 2 2 2-2 2 2 2-2v-9C16 5.58 12.42 2 10 2z" fill={color} />
+      <Circle cx="7.5" cy="10" r="1.2" fill="#2d1060" />
+      <Circle cx="12.5" cy="10" r="1.2" fill="#2d1060" />
+      {/* Arrow badge bottom-right */}
+      <Circle cx="18" cy="18" r="4.5" fill="#9945FF" />
+      <Path d="M16 20L20 16M20 16h-2.5M20 16v2.5" stroke="#fff" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    </Svg>
+  );
+}
+
+// Ghost Receive — ghost with down-left arrow (receive privately)
+export function GhostReceiveIcon({ size = 24, color = '#fff' }: IconProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      {/* Ghost body */}
+      <Path d="M10 2C5.58 2 2 5.58 2 10v9l2-2 2 2 2-2 2 2 2-2 2 2 2-2v-9C16 5.58 12.42 2 10 2z" fill={color} />
+      <Circle cx="7.5" cy="10" r="1.2" fill="#2d1060" />
+      <Circle cx="12.5" cy="10" r="1.2" fill="#2d1060" />
+      {/* Arrow badge bottom-right */}
+      <Circle cx="18" cy="18" r="4.5" fill="#14F195" />
+      <Path d="M20 16L16 20M16 20h2.5M16 20v-2.5" stroke="#fff" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
     </Svg>
   );
 }

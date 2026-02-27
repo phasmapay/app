@@ -1,20 +1,20 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, ActivityIndicator,
-  Alert, KeyboardAvoidingView, Platform,
+  Alert, KeyboardAvoidingView, Platform, Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { router } from 'expo-router';
 import Animated, {
   useSharedValue, useAnimatedStyle, withRepeat, withSequence,
   withTiming, withSpring, Easing,
 } from 'react-native-reanimated';
-import { Connection } from '@solana/web3.js';
 import { useWallet } from '../src/context/WalletContext';
 import { useNfc } from '../src/hooks/useNfc';
 import { useGhostReceive } from '../src/hooks/useGhostReceive';
-import { RPC_URL } from '../src/utils/constants';
+import { getConnection } from '../src/utils/solana';
 
-const SOLSCAN_BASE = 'https://solscan.io/tx';
+const ghostIcon = require('../ghost.png');
 const POLL_TIMEOUT_SEC = 180;
 
 function formatUsdcRaw(raw: bigint): string {
@@ -63,7 +63,7 @@ function GhostPulse({ active }: { active: boolean }) {
           backgroundColor: active ? 'rgba(20,241,149,0.1)' : 'rgba(153,69,255,0.1)',
         }}
       >
-        <Text style={{ fontSize: 48 }}>👻</Text>
+        <Image source={ghostIcon} style={{ width: 56, height: 56, tintColor: active ? '#14F195' : '#9945FF' }} />
       </View>
     </Animated.View>
   );
@@ -103,6 +103,24 @@ export default function GhostReceiveScreen() {
   const [amount, setAmount] = useState('');
   const [isFocused, setIsFocused] = useState(false);
   const timerKey = useRef(0);
+
+  // Navigate to receipt when claim completes
+  useEffect(() => {
+    if (hook.state.status === 'done') {
+      router.replace({
+        pathname: '/receipt/[signature]',
+        params: {
+          signature: hook.state.claimSignature ?? '',
+          amount: hook.state.receivedAmount ? (Number(hook.state.receivedAmount) / 1_000_000).toString() : amount,
+          recipient: '',
+          cashback: '0',
+          savedGas: '0',
+          received: 'true',
+          ghostMode: 'true',
+        },
+      });
+    }
+  }, [hook.state.status]);
 
   // Each new polling session gets a fresh countdown key
   useEffect(() => {
@@ -144,8 +162,7 @@ export default function GhostReceiveScreen() {
 
   const handleClaim = () => {
     if (!publicKey) return;
-    const connection = new Connection(RPC_URL, 'confirmed');
-    hook.claim(connection, publicKey.toBase58(), authToken ?? '');
+    hook.claim(getConnection(), publicKey.toBase58(), authToken ?? '');
   };
 
   const { status } = hook.state;
@@ -169,8 +186,9 @@ export default function GhostReceiveScreen() {
               backgroundColor: 'rgba(153,69,255,0.15)', borderRadius: 6,
               paddingHorizontal: 8, paddingVertical: 3,
             }}>
+              <Image source={ghostIcon} style={{ width: 12, height: 12, tintColor: '#9945FF', marginRight: 4 }} />
               <Text style={{ color: '#9945FF', fontSize: 11, fontWeight: '600' }}>
-                👻 One-time address
+                One-time address
               </Text>
             </View>
           </View>
@@ -207,9 +225,11 @@ export default function GhostReceiveScreen() {
 
           {/* State-specific content */}
           {status === 'idle' && (
-            <Text style={{ color: '#888', textAlign: 'center', fontSize: 14 }}>
-              Enter amount and tap to generate a one-time payment address
-            </Text>
+            <View>
+              <Text style={{ color: '#888', textAlign: 'center', fontSize: 14, marginBottom: 16 }}>
+                Enter amount and tap to generate a one-time payment address
+              </Text>
+            </View>
           )}
 
           {status === 'generating' && (
@@ -259,7 +279,7 @@ export default function GhostReceiveScreen() {
               borderWidth: 1, borderColor: '#14F195',
             }}>
               <Text style={{ color: '#14F195', fontSize: 22, fontWeight: '700', textAlign: 'center', marginBottom: 4 }}>
-                💜 Payment Received!
+                Payment Received!
               </Text>
               <Text style={{ color: '#fff', fontSize: 28, fontWeight: '700', textAlign: 'center', marginBottom: 16 }}>
                 ${hook.state.receivedAmount ? formatUsdcRaw(hook.state.receivedAmount) : amount} USDC
@@ -292,42 +312,9 @@ export default function GhostReceiveScreen() {
           )}
 
           {status === 'done' && (
-            <View style={{
-              backgroundColor: '#141414', borderRadius: 24, padding: 20,
-              borderWidth: 1, borderColor: '#14F195',
-              alignItems: 'center',
-            }}>
-              <Text style={{ fontSize: 40, marginBottom: 10 }}>✅</Text>
-              <Text style={{ color: '#14F195', fontSize: 20, fontWeight: '700', marginBottom: 6 }}>
-                Payment Claimed!
-              </Text>
-              {hook.state.receivedAmount && (
-                <Text style={{ color: '#fff', fontSize: 22, fontWeight: '700', marginBottom: 16 }}>
-                  ${formatUsdcRaw(hook.state.receivedAmount)} USDC
-                </Text>
-              )}
-              {hook.state.claimSignature && (
-                <View style={{
-                  backgroundColor: '#1a1a1a', borderRadius: 10,
-                  paddingHorizontal: 14, paddingVertical: 10, marginBottom: 20, width: '100%',
-                }}>
-                  <Text style={{ color: '#555', fontSize: 11, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 4 }}>
-                    Solscan
-                  </Text>
-                  <Text style={{ color: '#14F195', fontSize: 12 }} numberOfLines={1} selectable>
-                    {`${SOLSCAN_BASE}/${hook.state.claimSignature}`}
-                  </Text>
-                </View>
-              )}
-              <TouchableOpacity
-                style={{
-                  backgroundColor: '#1f1f1f', borderRadius: 14,
-                  paddingVertical: 14, paddingHorizontal: 32,
-                }}
-                onPress={hook.reset}
-              >
-                <Text style={{ color: '#888', fontWeight: '600' }}>New Session</Text>
-              </TouchableOpacity>
+            <View style={{ alignItems: 'center' }}>
+              <ActivityIndicator color="#14F195" size="large" />
+              <Text style={{ color: '#14F195', marginTop: 12, fontWeight: '600' }}>Redirecting...</Text>
             </View>
           )}
 
@@ -350,7 +337,7 @@ export default function GhostReceiveScreen() {
 
           {/* Start button — only shown in idle state */}
           {status === 'idle' && (
-            <View style={{ position: 'absolute', bottom: 32, left: 20, right: 20 }}>
+            <View style={{ position: 'absolute', bottom: 90, left: 20, right: 20 }}>
               <TouchableOpacity
                 style={{
                   backgroundColor: canStart ? '#9945FF' : '#1f1f1f',

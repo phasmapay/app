@@ -17,15 +17,42 @@
         "backgroundColor": "#0a0a0a"
       },
       "package": "app.phasmapay",
-      "permissions": ["android.permission.NFC"]
+      "permissions": [
+        "android.permission.NFC"
+      ]
     },
     "plugins": [
       "expo-router",
-      "react-native-nfc-manager"
+      "react-native-nfc-manager",
+      "expo-asset",
+      [
+        "expo-font",
+        {
+          "fonts": [
+            "node_modules/@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/Ionicons.ttf"
+          ]
+        }
+      ]
     ],
+    "runtimeVersion": "1.0.0",
+    "updates": {
+      "url": "https://u.expo.dev/07ba8391-0e7f-45b6-857e-9a2a6533bc78"
+    },
     "scheme": "phasmapay",
     "experiments": {
       "typedRoutes": true
-    }
+    },
+    "ios": {
+      "bundleIdentifier": "app.phasmapay"
+    },
+    "extra": {
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "07ba8391-0e7f-45b6-857e-9a2a6533bc78"
+      }
+    },
+    "owner": "amrrobb"
   }
 }

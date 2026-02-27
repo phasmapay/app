@@ -1,134 +1,153 @@
-# PhasmaPay 👻
+# PhasmaPay
 
-NFC tap-to-pay on Solana Seeker. Tap phone → pay USDC instantly. AI agent optimizes gas. SKR cashback rewards.
+NFC tap-to-pay for USDC on Solana with ghost addresses — ephemeral keypairs that keep the merchant's real wallet off-chain.
 
-**Hackathon:** MONOLITH (Solana Mobile) — March 9, 2026
-**Prize Target:** $10K Top 10 + $10K Best SKR Integration
+## Download
 
----
+- **APK (Android):** [Install from Expo](https://expo.dev/accounts/amrrobb/projects/phasmapay/builds/0294bc37-d728-4e39-831f-0a95ccecbd1d)
+- **Demo Video:** [Google Drive](https://drive.google.com/drive/folders/174K8g1-jy9XzaOkPZpDC1APJYDif9bwP?usp=sharing)
 
-## What It Does
+## Prerequisites
 
-- **Tap to Pay**: Write Solana Pay URLs to NFC tags. Customers tap Seeker → instant USDC payment
-- **AI Agent**: Detects cheapest payment route (direct USDC vs Jupiter swap), shows gas savings
-- **SKR Rewards**: Tiered cashback system (Ghost → Bronze → Silver → Gold) based on staked SKR
-- **MWA + Seed Vault**: All signing goes through Mobile Wallet Adapter → Seed Vault. No keys in app
+- Node.js 18+
+- Android Studio (for SDK — you don't need the IDE, just the SDK tools)
+- Android device with NFC and [Phantom](https://phantom.app/) installed
+- USB cable + USB debugging enabled (Settings → Developer Options → USB Debugging)
 
-## Architecture
-
-```
-NFC Tag (Solana Pay URL)
-    ↓ react-native-nfc-manager
-AI Agent (optimizePayment)
-    ↓ check USDC balance
-    ├── Direct: buildUsdcTransferTx()
-    └── Swap: Jupiter v6 → then transfer
-            ↓ transact() → MWA → Seed Vault
-Transaction confirmed on Solana
-    ↓
-SKR cashback calculated + stored
-```
-
-## Setup
-
-### Prerequisites
-
-- Node 20+
-- Android device with NFC (Seeker or any NFC-capable Android)
-- [Fakewallet](https://github.com/solana-mobile/mobile-wallet-adapter/tree/main/android/fakewallet) sideloaded (for testing without Seeker)
-
-### Install
+## Quick Start
 
 ```bash
-cd phasmapay
+git clone https://github.com/phasmapay/app.git
+cd app
 npm install
-cp .env.example .env
+cp .env.example .env    # defaults work for devnet
+npx expo run:android    # builds & installs on connected device
 ```
 
-### Run (requires physical Android device)
+> First build takes ~5 min (Gradle). Subsequent runs use cache and are faster.
+
+## Environment Variables
+
+Copy `.env.example` to `.env`. Defaults work out of the box for devnet:
+
+| Variable | Description |
+|---|---|
+| `EXPO_PUBLIC_SOLANA_NETWORK` | `devnet` or `mainnet-beta` |
+| `EXPO_PUBLIC_RPC_URL` | Solana RPC endpoint |
+| `EXPO_PUBLIC_USDC_MINT_DEVNET` | Devnet USDC mint address |
+| `EXPO_PUBLIC_SKR_MINT` | SKR rewards token mint (placeholder) |
+
+## Get Devnet Funds
+
+You need devnet SOL (for gas) and devnet USDC (for payments):
+
+- **SOL:** https://faucet.solana.com
+- **USDC:** https://faucet.circle.com → select Solana Devnet
+
+## How It Works
+
+### Standard Mode (NFC tag)
+
+```
+Merchant: enter amount → write Solana Pay URL to NFC tag
+Customer: tap phone on tag → confirm → Phantom signs → USDC sent
+```
+
+### Ghost Mode (phone-to-phone, address isolation)
+
+```
+Merchant                          Customer
+────────                          ────────
+Enter amount
+Generate ephemeral keypair
+Broadcast via NFC (HCE)
+                    ◄── tap ──►
+                                  Read ephemeral address
+                                  Send USDC → ephemeral addr
+                                  (Phantom signs)
+Poll detects payment
+"Claim to Wallet"
+  └─ Sweep: ephemeral → real wallet
+  └─ Close ephemeral ATA (rent reclaimed)
+```
+
+The payer's on-chain tx only shows the ephemeral address as recipient — the merchant's real wallet address never appears in the payer's transaction. Each payment gets a fresh keypair. Current implementation provides address isolation; future versions will integrate [Light Protocol](https://www.lightprotocol.com/) for fully shielded transfers.
+
+**Why this matters:** Open any block explorer and search a merchant's wallet address. You can see every payment they ever received. Ghost mode ensures the merchant's real address never appears in any customer transaction — each payment uses a fresh one-time address that's destroyed after the sweep.
+
+## Roadmap
+
+- **Privacy:** Integrate Light Protocol for fully shielded on-chain transfers
+- **Fiat on/off-ramp:** Payer tops up with fiat (on-ramp to USDC), merchant settles to fiat (off-ramp from USDC). Neither side touches crypto — Solana is the invisible settlement layer. Integration targets: Bridge, Sphere, Decaf
+- **Multi-token:** Accept any SPL token, auto-swap to merchant's preferred settlement currency
+- **Seeker native:** Seed Vault background signing for zero-interaction tap-to-pay on Solana Seeker hardware
+
+## Testing with Two Devices
+
+Ghost mode requires two Android phones with NFC:
+
+1. **Phone A (Merchant):** Ghost Receive → enter $1.00 → "Start Ghost Session"
+2. **Phone B (Customer):** Ghost Pay → "Scan Ghost Tag" → hold phones back-to-back
+3. **Phone B:** Approve in Phantom
+4. **Phone A:** "Payment Received" → "Claim to Wallet" → approve in Phantom
+
+Both phones need Phantom installed and funded with devnet SOL + USDC.
+
+## Project Structure
+
+```
+app/                    # Expo Router screens
+├── pay.tsx             # Standard NFC pay
+├── receive.tsx         # Standard NFC receive
+├── ghost-pay.tsx       # Ghost mode pay (customer)
+├── ghost-receive.tsx   # Ghost mode receive (merchant)
+└── receipt/            # Shared receipt screen
+
+src/
+├── services/
+│   ├── payment.ts      # USDC transfer + MWA signing
+│   ├── ghostPayment.ts # Ephemeral keypair, sweep tx, ATA close
+│   ├── nfc.ts          # NFC read/write helpers
+│   ├── hce.ts          # Host Card Emulation
+│   ├── jupiter.ts      # Jupiter v6 route optimization
+│   ├── torque.ts       # Torque SDK loyalty tracking
+│   └── skr.ts          # SKR balance & tier calc
+├── hooks/              # usePayment, useNfc, useBalances, useGhostReceive
+├── context/            # WalletContext (MWA connection state)
+└── utils/              # Constants, Solana connection
+
+api/server.ts           # Solana Actions / Blinks endpoint
+```
+
+## Blinks Server (Optional)
+
+Payment requests work as Solana Actions, shareable as Blinks:
 
 ```bash
-npx expo run:android
+RPC_URL=https://api.devnet.solana.com npx ts-node --transpile-only api/server.ts
+# Runs on http://localhost:3000
 ```
 
-> **Note:** NFC requires a real device. Emulators don't support NFC hardware.
+## Tech Stack
 
-### Android Manifest (already configured)
+- **Framework:** React Native + Expo (bare workflow)
+- **Wallet:** Mobile Wallet Adapter v2 (works with Phantom, Solflare, or any MWA-compatible wallet)
+- **Blockchain:** `@solana/web3.js`, `@solana/spl-token`
+- **NFC:** `react-native-nfc-manager` (read/write/HCE)
+- **Routing:** Jupiter v6 (automatic SOL→USDC swap)
+- **Loyalty:** SKR tiered cashback system (0.5%–3%)
+- **UI:** React Native Reanimated, custom SVG icons
 
-NFC permissions and intent filter for `solana:` scheme are in `android/app/src/main/AndroidManifest.xml`.
+## Troubleshooting
 
-## Screens
+| Problem | Fix |
+|---|---|
+| Build fails on Kotlin version | Pin Kotlin 1.9.25 in `android/build.gradle` — see `android/CLAUDE.md` |
+| `android/` missing after `expo prebuild --clean` | Re-apply Kotlin pin + `android/local.properties` SDK path |
+| NFC not working | Check Settings → NFC is ON. Both devices need NFC hardware. |
+| Phantom not connecting | Ensure Phantom is installed, then tap "Connect Wallet" on home screen |
+| Metro can't find device | Run `adb devices` — device must show as `device` not `unauthorized` |
 
-| Screen | Route | Description |
-|--------|-------|-------------|
-| Home | `/` | Balance (USDC/SOL/SKR), tier, quick actions |
-| Pay | `/pay` | NFC scan → payment confirmation → Seed Vault signing |
-| Receive | `/receive` | Enter amount → write Solana Pay URL to NFC tag |
-| History | `/history` | Past txs with gas savings + cashback per row |
-| Settings | `/settings` | Network, wallet address, disconnect |
-| Receipt | `/receipt/[sig]` | Post-payment summary with Explorer link |
+## License
 
-## Key Files
-
-```
-src/
-  services/
-    nfc.ts          — Read/write NDEF Solana Pay tags
-    payment.ts      — Build + execute USDC transfer txs
-    jupiter.ts      — Jupiter v6 quote + swap
-    agent.ts        — AI gas optimization logic
-    skr.ts          — SKR balance, tier calculation, cashback
-    storage.ts      — AsyncStorage for tx history
-  hooks/
-    useNfc.ts       — NFC state machine
-    usePayment.ts   — Payment state machine
-    useBalances.ts  — USDC/SOL/SKR balance fetcher
-  context/
-    WalletContext.tsx — MWA auth + session persistence
-  utils/
-    constants.ts    — Mints, network config, app identity
-    solana.ts       — Connection singleton, helpers
-app/
-  (tabs)/
-    index.tsx       — Home screen
-    history.tsx     — Transaction history
-    settings.tsx    — Settings
-  pay.tsx           — Pay screen (modal)
-  receive.tsx       — Receive screen (modal)
-  receipt/[sig].tsx — Receipt screen (modal)
-```
-
-## USDC Mints
-
-| Network | Mint |
-|---------|------|
-| Devnet | `Gh9ZwEmdLJ8DscKNTkTqPbNwLNNBjuSzaG9Vp2KGtKJr` |
-| Mainnet | `EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v` |
-
-Switch via `EXPO_PUBLIC_SOLANA_NETWORK=mainnet-beta` in `.env`.
-
-## Testing Without Physical NFC
-
-Use `mockNfcRead()` from `src/services/nfc.ts` in development:
-
-```typescript
-import { mockNfcRead } from '@/services/nfc';
-const mockData = mockNfcRead('RecipientAddress...', 5.00);
-await prepare(mockData); // triggers payment flow
-```
-
-## Demo Flow
-
-1. Merchant: opens Receive tab → enters $5.00 → taps "Write NFC Tag" against tag
-2. Customer: opens Pay tab → taps "Scan NFC Tag" → holds Seeker to tag
-3. AI optimizes: "direct USDC transfer, saved $0.025 in gas"
-4. Customer confirms → Seed Vault signs → tx lands on Solana devnet
-5. Receipt shows: amount, AI savings, SKR cashback, Explorer link
-
-## References
-
-- [Solana Mobile SDK](https://docs.solanamobile.com)
-- [MWA 2.0 Protocol](https://docs.solanamobile.com/react-native/mobile-wallet-adapter)
-- [react-native-nfc-manager](https://github.com/revtel/react-native-nfc-manager)
-- [Jupiter v6 API](https://station.jup.ag/docs/apis/swap-api)
-- [Solana dApp Store](https://docs.solanamobile.com/dapp-publishing/overview)
+MIT

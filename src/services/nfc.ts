@@ -1,6 +1,15 @@
 import NfcManager, { NfcTech, Ndef } from 'react-native-nfc-manager';
 import { USDC_MINT, APP_IDENTITY } from '../utils/constants';
 
+function withTimeout<T>(promise: Promise<T>, ms: number, msg: string): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error(msg)), ms)
+    ),
+  ]);
+}
+
 export type NfcPaymentData = {
   recipient: string;
   amount: number;
@@ -41,12 +50,26 @@ export function parseSolanaPayUrl(url: string): NfcPaymentData | null {
   }
 }
 
-export async function initNfc(): Promise<boolean> {
+let nfcStarted = false;
+
+export async function initNfc(): Promise<'ready' | 'disabled' | 'unsupported'> {
   try {
-    await NfcManager.start();
     const isSupported = await NfcManager.isSupported();
+    if (!isSupported) return 'unsupported';
+    if (!nfcStarted) {
+      await NfcManager.start();
+      nfcStarted = true;
+    }
     const isEnabled = await NfcManager.isEnabled();
-    return isSupported && isEnabled;
+    return isEnabled ? 'ready' : 'disabled';
+  } catch {
+    return 'unsupported';
+  }
+}
+
+export async function checkNfcEnabled(): Promise<boolean> {
+  try {
+    return await NfcManager.isEnabled();
   } catch {
     return false;
   }
@@ -58,27 +81,54 @@ export async function writePaymentTag(
   label: string = APP_IDENTITY.name
 ): Promise<void> {
   const url = buildSolanaPayUrl(recipientAddress, usdcAmount, label);
+  // Cancel any stale request before starting a new one
+  await NfcManager.cancelTechnologyRequest().catch(() => {});
   await NfcManager.requestTechnology(NfcTech.Ndef);
   try {
     const bytes = Ndef.encodeMessage([Ndef.uriRecord(url)]);
     await NfcManager.ndefHandler.writeNdefMessage(bytes);
+  } catch (err) {
+    console.warn('[NFC] writePaymentTag failed:', err);
+    throw err;
   } finally {
     await NfcManager.cancelTechnologyRequest();
   }
 }
 
 export async function readPaymentTag(): Promise<NfcPaymentData | null> {
-  await NfcManager.requestTechnology(NfcTech.Ndef);
+  await NfcManager.cancelTechnologyRequest().catch(() => {});
+  await withTimeout(
+    NfcManager.requestTechnology(NfcTech.Ndef),
+    30_000,
+    'NFC scan timed out — hold tag closer'
+  );
   try {
     const tag = await NfcManager.getTag();
     const record = tag?.ndefMessage?.[0];
     if (!record) return null;
 
     // URI records: first byte is URI prefix code, rest is the URI
-    const payload = new Uint8Array(record.payload);
-    // Skip the URI prefix byte (index 0)
-    const uriString = String.fromCharCode(...payload.slice(1));
-    return parseSolanaPayUrl(uriString);
+    const payload = record.payload;
+    let uriString: string;
+    if (typeof payload === 'string') {
+      // Some Android versions return string directly
+      uriString = payload.startsWith('\x00') ? payload.slice(1) : payload;
+    } else {
+      const bytes = new Uint8Array(payload);
+      // Index 0 is the URI prefix identifier byte — skip it
+      const uriBytes = bytes.slice(1);
+      try {
+        uriString = new TextDecoder('utf-8').decode(uriBytes);
+      } catch {
+        uriString = String.fromCharCode(...uriBytes);
+      }
+    }
+    console.log('[NFC] decoded URI:', uriString);
+    const parsed = parseSolanaPayUrl(uriString);
+    if (!parsed) {
+      console.warn('[NFC] parseSolanaPayUrl returned null for:', uriString);
+    }
+    return parsed;
   } finally {
     await NfcManager.cancelTechnologyRequest();
   }

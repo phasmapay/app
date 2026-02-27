@@ -8,7 +8,8 @@ export type StoredTransaction = {
   timestamp: number;
   savedGas: number;
   cashback: number;
-  strategy: 'direct' | 'swap';
+  strategy: 'direct' | 'swap' | 'received';
+  type?: 'sent' | 'received';
 };
 
 const KEYS = {
@@ -74,4 +75,12 @@ export async function getTotalCashback(): Promise<number> {
 export async function getTotalSavedGas(): Promise<number> {
   const val = await AsyncStorage.getItem(KEYS.TOTAL_SAVED_GAS);
   return val ? parseFloat(val) : 0;
+}
+
+export async function clearTransactions(): Promise<void> {
+  await Promise.all([
+    AsyncStorage.removeItem(KEYS.TRANSACTIONS),
+    AsyncStorage.removeItem(KEYS.TOTAL_CASHBACK),
+    AsyncStorage.removeItem(KEYS.TOTAL_SAVED_GAS),
+  ]);
 }

@@ -30,17 +30,19 @@ export function useNfc() {
       else setState({ status: 'unsupported' });
     });
 
-    // Re-check NFC when app comes back from settings
+    // Re-check NFC when app comes back from settings — only update if in disabled/unsupported state
     const sub = AppState.addEventListener('change', (nextState) => {
       if (nextState === 'active') {
         checkNfcEnabled().then((enabled) => {
           if (enabled) {
             setIsSupported(true);
-            setState((prev) =>
-              prev.status === 'disabled' || prev.status === 'unsupported'
-                ? { status: 'ready' }
-                : prev
-            );
+            setState((prev) => {
+              // Only promote from disabled/unsupported → ready. Never touch other states.
+              if (prev.status === 'disabled' || prev.status === 'unsupported') {
+                return { status: 'ready' };
+              }
+              return prev;
+            });
           }
         });
       }
