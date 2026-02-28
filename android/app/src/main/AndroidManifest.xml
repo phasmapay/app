@@ -31,6 +31,17 @@
         <data android:scheme="phasmapay"/>
         <data android:scheme="app.phasmapay"/>
       </intent-filter>
+      <intent-filter>
+        <action android:name="android.intent.action.VIEW"/>
+        <category android:name="android.intent.category.DEFAULT"/>
+        <category android:name="android.intent.category.BROWSABLE"/>
+        <data android:scheme="solana"/>
+      </intent-filter>
+      <intent-filter>
+        <action android:name="android.nfc.action.NDEF_DISCOVERED"/>
+        <category android:name="android.intent.category.DEFAULT"/>
+        <data android:scheme="solana"/>
+      </intent-filter>
     </activity>
     <service android:name=".HceService" android:exported="true" android:permission="android.permission.BIND_NFC_SERVICE">
       <intent-filter>

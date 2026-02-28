@@ -1,15 +1,18 @@
 import { useCallback, useRef, useState } from 'react';
 import { Alert } from 'react-native';
-import { Connection, PublicKey } from '@solana/web3.js';
+import { Connection, Keypair, PublicKey } from '@solana/web3.js';
 import bs58 from 'bs58';
 import { transact } from '@solana-mobile/mobile-wallet-adapter-protocol-web3js';
 import {
   generateEphemeralKeypair,
-  saveSessionKey,
-  loadSessionKey,
-  clearSessionKey,
+  saveUnclaimedPayment,
+  updateUnclaimedPayment,
+  removeUnclaimedPayment,
+  getUnclaimedPayments,
+  keypairFromUnclaimed,
   buildSweepTx,
   pollForPayment,
+  UnclaimedPayment,
 } from '../services/ghostPayment';
 import { writePaymentTag, buildSolanaPayUrl } from '../services/nfc';
 import { startHce, stopHce } from '../services/hce';
@@ -33,13 +36,14 @@ export type GhostReceiveState = {
   receivedAmount?: bigint;
   claimSignature?: string;
   message?: string;
+  currentPaymentId?: string;
 };
 
 export function useGhostReceive() {
   const [state, setState] = useState<GhostReceiveState>({ status: 'idle' });
+  const [unclaimedPayments, setUnclaimedPayments] = useState<UnclaimedPayment[]>([]);
   const cleanupPollRef = useRef<(() => void) | null>(null);
   const prefetchedBlockhashRef = useRef<{ blockhash: string; lastValidBlockHeight: number } | null>(null);
-  const cachedKeypairRef = useRef<import('@solana/web3.js').Keypair | null>(null);
 
   const cancelPolling = () => {
     if (cleanupPollRef.current) {
@@ -47,6 +51,13 @@ export function useGhostReceive() {
       cleanupPollRef.current = null;
     }
   };
+
+  const refreshUnclaimed = useCallback(async () => {
+    const list = await getUnclaimedPayments();
+    const claimable = list.filter((p) => p.status === 'received' || p.status === 'failed');
+    setUnclaimedPayments(claimable);
+    return claimable;
+  }, []);
 
   const start = useCallback(
     async (amount: number, merchantPubkey: string, _authToken: string) => {
@@ -57,11 +68,20 @@ export function useGhostReceive() {
         setState({ status: 'generating' });
         const { publicKey: ephPubkey, secretKey } = generateEphemeralKeypair();
 
-        // Step 2: persist to storage BEFORE writing NFC tag (crash-safe)
-        await saveSessionKey(secretKey);
+        // Step 2: persist to unclaimed list (not overwriting old ones)
+        const paymentId = `ghost-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+        const payment: UnclaimedPayment = {
+          id: paymentId,
+          secretKey,
+          ephemeralPubkey: ephPubkey,
+          amount,
+          createdAt: Date.now(),
+          status: 'pending',
+        };
+        await saveUnclaimedPayment(payment);
 
         // Step 3: start HCE emulation (phone acts as NFC tag for phone-to-phone)
-        setState({ status: 'writing', ephemeralPubkey: ephPubkey });
+        setState({ status: 'writing', ephemeralPubkey: ephPubkey, currentPaymentId: paymentId });
         const payUrl = buildSolanaPayUrl(ephPubkey, amount, 'Ghost Pay');
         try {
           await startHce(payUrl);
@@ -71,7 +91,7 @@ export function useGhostReceive() {
         }
 
         // Step 4: start polling for payment
-        setState({ status: 'polling', ephemeralPubkey: ephPubkey });
+        setState({ status: 'polling', ephemeralPubkey: ephPubkey, currentPaymentId: paymentId });
 
         const connection = getConnection();
         const cleanup = pollForPayment(
@@ -80,20 +100,20 @@ export function useGhostReceive() {
           amount,
           (rawAmount) => {
             cleanupPollRef.current = null;
-            // Pre-fetch blockhash and session key so claim is faster
+            // Update storage with received status
+            updateUnclaimedPayment(paymentId, { status: 'received', receivedAmount: Number(rawAmount) }).catch(() => {});
+            // Pre-fetch blockhash so claim is faster
             getConnection().getLatestBlockhash('confirmed')
               .then((bh) => { prefetchedBlockhashRef.current = bh; })
               .catch(() => {});
-            loadSessionKey()
-              .then((kp) => { cachedKeypairRef.current = kp; })
-              .catch(() => {});
-            setState({ status: 'received', ephemeralPubkey: ephPubkey, receivedAmount: rawAmount });
+            setState({ status: 'received', ephemeralPubkey: ephPubkey, receivedAmount: rawAmount, currentPaymentId: paymentId });
           },
           () => {
             cleanupPollRef.current = null;
             setState({
               status: 'error',
               ephemeralPubkey: ephPubkey,
+              currentPaymentId: paymentId,
               message: 'Payment timed out after 3 minutes. Tap Retry to wait again.',
             });
           },
@@ -109,51 +129,86 @@ export function useGhostReceive() {
   );
 
   const claim = useCallback(
-    async (connection: Connection, merchantPubkeyStr: string, authToken: string) => {
+    async (connection: Connection, merchantPubkeyStr: string, authToken: string, paymentId?: string) => {
       setState((prev) => ({ ...prev, status: 'claiming' }));
       try {
-        const ephemeralKeypair = cachedKeypairRef.current ?? await loadSessionKey();
-        if (!ephemeralKeypair) throw new Error('Session key not found — cannot claim');
+        console.log('[useGhostReceive] claim started, paymentId:', paymentId);
+
+        // Resolve the ephemeral keypair — either from paymentId or current state
+        let ephemeralKeypair: Keypair;
+        let resolvedPaymentId = paymentId;
+
+        if (paymentId) {
+          const list = await getUnclaimedPayments();
+          const payment = list.find((p) => p.id === paymentId);
+          if (!payment) throw new Error('Unclaimed payment not found');
+          ephemeralKeypair = keypairFromUnclaimed(payment);
+          await updateUnclaimedPayment(paymentId, { status: 'claiming' });
+        } else {
+          // Fallback: find the most recent received/failed payment
+          const list = await getUnclaimedPayments();
+          const payment = list.find((p) => p.status === 'received' || p.status === 'failed');
+          if (!payment) throw new Error('No unclaimed payment found');
+          ephemeralKeypair = keypairFromUnclaimed(payment);
+          resolvedPaymentId = payment.id;
+          await updateUnclaimedPayment(payment.id, { status: 'claiming' });
+        }
+
+        console.log('[useGhostReceive] ephemeral loaded:', ephemeralKeypair.publicKey.toBase58());
 
         const merchantPubkey = new PublicKey(merchantPubkeyStr);
-        const { tx, amount } = await buildSweepTx(connection, ephemeralKeypair, merchantPubkey, prefetchedBlockhashRef.current);
 
-        // Partial sign with ephemeral keypair locally (it is the authority over source ATA)
-        tx.partialSign(ephemeralKeypair);
-
+        // Build tx BEFORE opening MWA — RPC calls happen while PhasmaPay is in foreground
+        console.log('[useGhostReceive] building sweep tx...');
+        const { tx, amount } = await buildSweepTx(connection, ephemeralKeypair, merchantPubkey, null);
         console.log('[useGhostReceive] sweep tx built, amount:', amount.toString());
-        console.log('[useGhostReceive] feePayer:', merchantPubkeyStr);
-        console.log('[useGhostReceive] ephemeral:', ephemeralKeypair.publicKey.toBase58());
 
-        const signature: string = await transact(async (wallet) => {
-          // Reauthorize — re-use existing session token
+        // MWA session: only auth + sign + send (no RPC calls inside — keeps it fast)
+        const signature = await transact(async (wallet) => {
           try {
             await wallet.reauthorize({ auth_token: authToken, identity: APP_IDENTITY });
           } catch {
-            await wallet.authorize({ cluster: 'solana:devnet', identity: APP_IDENTITY });
+            await wallet.authorize({ cluster: 'solana:devnet' as any, identity: APP_IDENTITY });
           }
 
-          console.log('[useGhostReceive] MWA authorized, sending tx...');
-          // MWA expects Transaction objects, not raw buffers
-          const results = await wallet.signAndSendTransactions({
-            transactions: [tx],
-            minContextSlot: 0,
-          });
-          console.log('[useGhostReceive] MWA results:', JSON.stringify(results));
+          console.log('[useGhostReceive] MWA authorized, signing...');
+          const results = await wallet.signTransactions({ transactions: [tx] });
           if (!results || results.length === 0) {
             throw new Error('Wallet returned empty results — tx may have been rejected');
           }
-          const sig = results[0];
-          if (!sig) {
-            throw new Error('Wallet returned null signature');
-          }
-          return typeof sig === 'string' ? sig : bs58.encode(sig as Uint8Array);
+          const signedTx = results[0];
+
+          // Add ephemeral signature + send immediately
+          signedTx.partialSign(ephemeralKeypair);
+          const rawTx = signedTx.serialize();
+          const sig = await connection.sendRawTransaction(rawTx, {
+            skipPreflight: true,
+            maxRetries: 3,
+          });
+          console.log('[useGhostReceive] sent raw tx, signature:', sig);
+          return sig;
         });
 
-        console.log('[useGhostReceive] claim signature:', signature);
+        // Confirm outside MWA — tolerate slow devnet confirmation
+        try {
+          await connection.confirmTransaction({
+            signature,
+            blockhash: tx.recentBlockhash!,
+            lastValidBlockHeight: tx.lastValidBlockHeight!,
+          }, 'confirmed');
+        } catch (confirmErr: unknown) {
+          const status = await connection.getSignatureStatus(signature);
+          if (!status?.value?.confirmationStatus) {
+            throw confirmErr;
+          }
+          console.log('[useGhostReceive] tx confirmed via fallback check');
+        }
+        console.log('[useGhostReceive] tx confirmed');
 
-        // Non-blocking: save + cleanup in parallel, navigate immediately
-        clearSessionKey().catch(() => {});
+        // Cleanup: remove from unclaimed list
+        if (resolvedPaymentId) {
+          removeUnclaimedPayment(resolvedPaymentId).catch(() => {});
+        }
         saveTransaction({
           signature,
           sender: ephemeralKeypair.publicKey.toBase58(),
@@ -174,6 +229,10 @@ export function useGhostReceive() {
       } catch (err: unknown) {
         const message = err instanceof Error ? err.message : String(err);
         console.error('[useGhostReceive] claim failed:', err);
+        // Mark as failed so it stays claimable
+        if (paymentId) {
+          updateUnclaimedPayment(paymentId, { status: 'failed' }).catch(() => {});
+        }
         Alert.alert('Claim Failed', message);
         setState((prev) => ({ ...prev, status: 'error', message }));
       }
@@ -185,7 +244,9 @@ export function useGhostReceive() {
     cancelPolling();
     stopHce().catch(() => {});
     setState({ status: 'idle' });
-  }, []);
+    // Refresh unclaimed list when returning to idle
+    refreshUnclaimed().catch(() => {});
+  }, [refreshUnclaimed]);
 
-  return { state, start, claim, reset };
+  return { state, unclaimedPayments, start, claim, reset, refreshUnclaimed };
 }

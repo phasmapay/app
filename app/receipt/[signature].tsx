@@ -80,7 +80,7 @@ export default function ReceiptScreen() {
 
           {savedGas > 0 && (
             <View className="flex-row justify-between mb-4">
-              <Text className="text-[#888]">AI Gas Savings</Text>
+              <Text className="text-[#888]">Route Savings</Text>
               <Text className="text-[#14F195] font-bold">
                 -${savedGas.toFixed(5)}
               </Text>

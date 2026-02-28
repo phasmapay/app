@@ -10,7 +10,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useWallet } from '../src/context/WalletContext';
 import { useNfc } from '../src/hooks/useNfc';
-import { mockNfcRead } from '../src/services/nfc';
+import { mockNfcRead, enableForegroundNfc, disableForegroundNfc } from '../src/services/nfc';
 import { usePayment } from '../src/hooks/usePayment';
 import { useBalances } from '../src/hooks/useBalances';
 
@@ -106,6 +106,11 @@ export default function GhostPayScreen() {
     authToken,
     skrStatus.balance,
   );
+
+  useEffect(() => {
+    enableForegroundNfc();
+    return () => { disableForegroundNfc(); };
+  }, []);
 
   const paymentStarted = React.useRef(false);
 
@@ -242,7 +247,7 @@ export default function GhostPayScreen() {
             </View>
             {payState.optimization.savedGas > 0 && (
               <View className="flex-row justify-between mb-4">
-                <Text className="text-[#888]">AI Savings</Text>
+                <Text className="text-[#888]">Route Savings</Text>
                 <Text className="text-[#14F195] font-semibold">
                   ${payState.optimization.savedGas.toFixed(5)}
                 </Text>

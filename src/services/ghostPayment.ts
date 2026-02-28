@@ -13,7 +13,18 @@ import { USDC_MINT, USDC_DECIMALS } from '../utils/constants';
 // NOTE: react-native-get-random-values polyfill is handled in the app entry point.
 // Do NOT import it here. Keypair.generate() works because the polyfill loads first.
 
-const SESSION_KEY = 'ghost_session_key';
+const SESSION_KEY = 'ghost_session_key'; // legacy — migrated on first load
+const UNCLAIMED_KEY = 'ghost_unclaimed_payments';
+
+export type UnclaimedPayment = {
+  id: string;
+  secretKey: number[];
+  ephemeralPubkey: string;
+  amount: number;
+  receivedAmount?: number;
+  createdAt: number;
+  status: 'pending' | 'received' | 'claiming' | 'failed';
+};
 
 export function generateEphemeralKeypair(): { publicKey: string; secretKey: number[] } {
   const kp = Keypair.generate();
@@ -22,6 +33,84 @@ export function generateEphemeralKeypair(): { publicKey: string; secretKey: numb
     secretKey: Array.from(kp.secretKey),
   };
 }
+
+// --- Multi-slot unclaimed payment storage ---
+
+async function migrateLegacySession(): Promise<void> {
+  try {
+    const raw = await AsyncStorage.getItem(SESSION_KEY);
+    if (!raw) return;
+    const secretKey: number[] = JSON.parse(raw);
+    const kp = Keypair.fromSecretKey(new Uint8Array(secretKey));
+    const payment: UnclaimedPayment = {
+      id: `legacy-${Date.now()}`,
+      secretKey,
+      ephemeralPubkey: kp.publicKey.toBase58(),
+      amount: 0, // unknown from legacy
+      createdAt: Date.now(),
+      status: 'received', // assume it has funds if key was saved
+    };
+    const existing = await getUnclaimedPayments();
+    existing.push(payment);
+    await AsyncStorage.setItem(UNCLAIMED_KEY, JSON.stringify(existing));
+    await AsyncStorage.removeItem(SESSION_KEY);
+    console.log('[GhostPay] migrated legacy session key');
+  } catch (e) {
+    console.warn('[GhostPay] legacy migration failed:', e);
+  }
+}
+
+let migrated = false;
+async function ensureMigrated(): Promise<void> {
+  if (migrated) return;
+  migrated = true;
+  await migrateLegacySession();
+}
+
+export async function getUnclaimedPayments(): Promise<UnclaimedPayment[]> {
+  await ensureMigrated();
+  try {
+    const raw = await AsyncStorage.getItem(UNCLAIMED_KEY);
+    if (!raw) return [];
+    return JSON.parse(raw);
+  } catch {
+    return [];
+  }
+}
+
+export async function saveUnclaimedPayment(payment: UnclaimedPayment): Promise<void> {
+  const list = await getUnclaimedPayments();
+  list.push(payment);
+  await AsyncStorage.setItem(UNCLAIMED_KEY, JSON.stringify(list));
+}
+
+export async function updateUnclaimedPayment(
+  id: string,
+  updates: Partial<Pick<UnclaimedPayment, 'status' | 'receivedAmount'>>,
+): Promise<void> {
+  const list = await getUnclaimedPayments();
+  const idx = list.findIndex((p) => p.id === id);
+  if (idx === -1) return;
+  list[idx] = { ...list[idx], ...updates };
+  await AsyncStorage.setItem(UNCLAIMED_KEY, JSON.stringify(list));
+}
+
+export async function clearAllUnclaimed(): Promise<void> {
+  await AsyncStorage.removeItem(UNCLAIMED_KEY);
+  await AsyncStorage.removeItem(SESSION_KEY);
+}
+
+export async function removeUnclaimedPayment(id: string): Promise<void> {
+  const list = await getUnclaimedPayments();
+  const filtered = list.filter((p) => p.id !== id);
+  await AsyncStorage.setItem(UNCLAIMED_KEY, JSON.stringify(filtered));
+}
+
+export function keypairFromUnclaimed(payment: UnclaimedPayment): Keypair {
+  return Keypair.fromSecretKey(new Uint8Array(payment.secretKey));
+}
+
+// --- Legacy single-key API (kept for backward compat during transition) ---
 
 export async function saveSessionKey(secretKey: number[]): Promise<void> {
   await AsyncStorage.setItem(SESSION_KEY, JSON.stringify(secretKey));
@@ -40,6 +129,8 @@ export async function loadSessionKey(): Promise<Keypair | null> {
 export async function clearSessionKey(): Promise<void> {
   await AsyncStorage.removeItem(SESSION_KEY);
 }
+
+// --- Transaction building ---
 
 export async function buildSweepTx(
   connection: Connection,
@@ -76,7 +167,7 @@ export async function buildSweepTx(
     ),
   );
 
-  // Transfer all USDC from ephemeral ATA → merchant ATA
+  // Transfer all USDC from ephemeral ATA -> merchant ATA
   tx.add(
     createTransferCheckedInstruction(
       sourceATA,

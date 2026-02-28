@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { useFocusEffect } from 'expo-router';
 import {
   View, Text, TouchableOpacity, ScrollView, RefreshControl, ActivityIndicator,
 } from 'react-native';
@@ -10,9 +11,10 @@ import Animated, {
 import { useWallet } from '../../src/context/WalletContext';
 import { useBalances } from '../../src/hooks/useBalances';
 import { getTierColor } from '../../src/services/skr';
+import { getUnclaimedPayments } from '../../src/services/ghostPayment';
 import { shortAddress } from '../../src/utils/solana';
 import { Image, Linking } from 'react-native';
-import { ArrowUpIcon, ArrowDownIcon, DiamondIcon, NotificationIcon, SolanaIcon, GhostPayIcon, GhostReceiveIcon } from '../../src/components/Icons';
+import { ArrowUpIcon, ArrowDownIcon, DiamondIcon, NotificationIcon, SolanaIcon, GhostPayIcon, GhostReceiveIcon, GhostIcon } from '../../src/components/Icons';
 
 function ActionButton({
   label, IconComponent, onPress, color,
@@ -50,6 +52,17 @@ export default function HomeScreen() {
   const { publicKey, isConnected, connect, isConnecting } = useWallet();
   const { usdc, sol, skrStatus, isLoading, error, refresh } = useBalances(
     publicKey?.toBase58() ?? null
+  );
+  const [claimableCount, setClaimableCount] = useState(0);
+
+  useFocusEffect(
+    useCallback(() => {
+      if (!isConnected) return;
+      getUnclaimedPayments().then((list) => {
+        const withFunds = list.filter((p) => p.status === 'received' || p.status === 'failed');
+        setClaimableCount(withFunds.length);
+      }).catch(() => {});
+    }, [isConnected])
   );
 
   if (!isConnected) {
@@ -180,6 +193,32 @@ export default function HomeScreen() {
             <ActionButton label="Ghost Recv" IconComponent={GhostReceiveIcon} onPress={() => router.push('/ghost-receive')} color="#0a1f14" />
           </View>
         </View>
+
+        {/* Claimable banner */}
+        {claimableCount > 0 && (
+          <TouchableOpacity
+            style={{
+              backgroundColor: '#1a1400', borderRadius: 16, padding: 16, marginBottom: 16,
+              borderWidth: 1, borderColor: '#FF9500',
+              flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+            }}
+            onPress={() => router.push('/claimable')}
+            activeOpacity={0.7}
+          >
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <GhostIcon size={20} color="#FF9500" />
+              <View style={{ marginLeft: 12 }}>
+                <Text style={{ color: '#FF9500', fontWeight: '700', fontSize: 15 }}>
+                  {claimableCount} unclaimed payment{claimableCount > 1 ? 's' : ''}
+                </Text>
+                <Text style={{ color: '#886600', fontSize: 11, marginTop: 2 }}>
+                  Tap to claim to your wallet
+                </Text>
+              </View>
+            </View>
+            <Text style={{ color: '#FF9500', fontSize: 20 }}>›</Text>
+          </TouchableOpacity>
+        )}
 
         {/* SKR Rewards */}
         <View style={{ backgroundColor: '#111', borderRadius: 20, padding: 20 }}>

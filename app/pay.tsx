@@ -10,7 +10,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useWallet } from '../src/context/WalletContext';
 import { useNfc } from '../src/hooks/useNfc';
-import { mockNfcRead } from '../src/services/nfc';
+import { mockNfcRead, enableForegroundNfc, disableForegroundNfc } from '../src/services/nfc';
 import { usePayment } from '../src/hooks/usePayment';
 import { useBalances } from '../src/hooks/useBalances';
 
@@ -107,6 +107,12 @@ export default function PayScreen() {
     authToken,
     skrStatus.balance
   );
+
+  // Claim exclusive NFC foreground dispatch to suppress system app chooser
+  useEffect(() => {
+    enableForegroundNfc();
+    return () => { disableForegroundNfc(); };
+  }, []);
 
   // Track whether we already kicked off payment from this NFC read
   const paymentStarted = React.useRef(false);
@@ -223,7 +229,7 @@ export default function PayScreen() {
             </View>
             {payState.optimization.savedGas > 0 && (
               <View className="flex-row justify-between mb-4">
-                <Text className="text-[#888]">AI Savings</Text>
+                <Text className="text-[#888]">Route Savings</Text>
                 <Text className="text-[#14F195] font-semibold">
                   ${payState.optimization.savedGas.toFixed(5)}
                 </Text>

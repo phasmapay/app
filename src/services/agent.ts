@@ -100,5 +100,5 @@ export async function optimizePayment(
 export function formatSavings(savedGas: number): string {
   if (savedGas <= 0) return '';
   // savedGas is in USD (e.g. 0.00037) — display as fractional cents
-  return `AI saved you $${savedGas.toFixed(5)} in gas`;
+  return `Route saved $${savedGas.toFixed(5)} in fees`;
 }

@@ -12,6 +12,7 @@ import Animated, {
 import { useWallet } from '../src/context/WalletContext';
 import { useNfc } from '../src/hooks/useNfc';
 import { useGhostReceive } from '../src/hooks/useGhostReceive';
+import { enableForegroundNfc, disableForegroundNfc } from '../src/services/nfc';
 import { getConnection } from '../src/utils/solana';
 
 const ghostIcon = require('../ghost.png');
@@ -104,6 +105,12 @@ export default function GhostReceiveScreen() {
   const [isFocused, setIsFocused] = useState(false);
   const timerKey = useRef(0);
 
+  // Claim exclusive NFC foreground dispatch to suppress system app chooser
+  useEffect(() => {
+    enableForegroundNfc();
+    return () => { disableForegroundNfc(); };
+  }, []);
+
   // Navigate to receipt when claim completes
   useEffect(() => {
     if (hook.state.status === 'done') {
@@ -160,9 +167,9 @@ export default function GhostReceiveScreen() {
     await hook.start(parsed, publicKey.toBase58(), authToken ?? '');
   };
 
-  const handleClaim = () => {
+  const handleClaim = (paymentId?: string) => {
     if (!publicKey) return;
-    hook.claim(getConnection(), publicKey.toBase58(), authToken ?? '');
+    hook.claim(getConnection(), publicKey.toBase58(), authToken ?? '', paymentId ?? hook.state.currentPaymentId);
   };
 
   const { status } = hook.state;
@@ -292,7 +299,7 @@ export default function GhostReceiveScreen() {
                   backgroundColor: '#9945FF', borderRadius: 16,
                   paddingVertical: 18, alignItems: 'center',
                 }}
-                onPress={handleClaim}
+                onPress={() => handleClaim()}
               >
                 <Text style={{ color: '#fff', fontWeight: '700', fontSize: 17 }}>Claim to Wallet</Text>
               </TouchableOpacity>

@@ -45,7 +45,7 @@ function TxRow({ tx }: { tx: StoredTransaction }) {
           </View>
           {tx.savedGas > 0 && (
             <Text className="text-[#14F195] text-xs font-semibold mt-1">
-              AI saved ${(tx.savedGas * 100).toFixed(3)}
+              Route saved ${tx.savedGas.toFixed(5)}
             </Text>
           )}
           {tx.cashback > 0 && (
@@ -88,8 +88,8 @@ export default function HistoryScreen() {
               <Text className="text-[#9945FF] text-lg font-bold">${totalCashback.toFixed(4)}</Text>
             </View>
             <View className="flex-1 bg-[#141414] rounded-2xl p-4 border border-[#1f1f1f]">
-              <Text className="text-[#888] text-xs uppercase tracking-widest mb-1">AI Savings</Text>
-              <Text className="text-[#14F195] text-lg font-bold">${(totalSavedGas * 100).toFixed(3)}</Text>
+              <Text className="text-[#888] text-xs uppercase tracking-widest mb-1">Route Savings</Text>
+              <Text className="text-[#14F195] text-lg font-bold">${totalSavedGas.toFixed(5)}</Text>
             </View>
           </View>
         )}

@@ -10,7 +10,7 @@ import { PublicKey } from '@solana/web3.js';
 import { router } from 'expo-router';
 import { useWallet } from '../src/context/WalletContext';
 import { useNfc } from '../src/hooks/useNfc';
-import { buildSolanaPayUrl } from '../src/services/nfc';
+import { buildSolanaPayUrl, enableForegroundNfc, disableForegroundNfc } from '../src/services/nfc';
 import { getUsdcBalance } from '../src/services/payment';
 import { saveTransaction } from '../src/services/storage';
 import { getConnection } from '../src/utils/solana';
@@ -21,6 +21,12 @@ export default function ReceiveScreen() {
   const { state, startEmulation, stopEmulation, reset } = useNfc();
   const [amount, setAmount] = useState('');
   const [isFocused, setIsFocused] = useState(false);
+
+  // Claim exclusive NFC foreground dispatch to suppress system app chooser
+  useEffect(() => {
+    enableForegroundNfc();
+    return () => { disableForegroundNfc(); };
+  }, []);
 
   const [receivedAmount, setReceivedAmount] = useState<number | null>(null);
   const baseBalanceRef = useRef<number | null>(null);

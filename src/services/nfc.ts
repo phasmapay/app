@@ -138,6 +138,32 @@ export async function cleanupNfc(): Promise<void> {
   await NfcManager.cancelTechnologyRequest().catch(() => {});
 }
 
+/**
+ * Claim exclusive NFC foreground dispatch — suppresses the system app chooser
+ * (ShopeePay, OVO, etc.) while PhasmaPay is in foreground.
+ * Call this when entering Receive/Ghost Receive screens.
+ */
+export async function enableForegroundNfc(): Promise<void> {
+  try {
+    await NfcManager.cancelTechnologyRequest().catch(() => {});
+    // registerTagEvent claims foreground dispatch — Android routes all NFC to our app
+    await NfcManager.registerTagEvent();
+  } catch (e) {
+    console.warn('[NFC] enableForegroundNfc failed:', e);
+  }
+}
+
+/**
+ * Release foreground dispatch. Call when leaving Receive screens.
+ */
+export async function disableForegroundNfc(): Promise<void> {
+  try {
+    await NfcManager.unregisterTagEvent();
+  } catch (e) {
+    console.warn('[NFC] disableForegroundNfc failed:', e);
+  }
+}
+
 // Mock for dev/emulator testing
 export function mockNfcRead(recipientAddress: string, amount: number): NfcPaymentData {
   return {
