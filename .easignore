@@ -5,3 +5,7 @@ android/.idea/
 android/build/
 android/app/build/
 node_modules/.cache/
+*.mov
+*.mp4
+app-debug.apk
+demo-app.*

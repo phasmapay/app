@@ -115,7 +115,7 @@ export async function readPaymentTag(): Promise<NfcPaymentData | null> {
     if (!record) return null;
 
     // URI records: first byte is URI prefix code, rest is the URI
-    const payload = record.payload;
+    const payload = record.payload as string | number[];
     let uriString: string;
     if (typeof payload === 'string') {
       // Some Android versions return string directly
