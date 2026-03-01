@@ -1,4 +1,5 @@
 import NfcManager, { NfcTech, Ndef } from 'react-native-nfc-manager';
+import { Keypair } from '@solana/web3.js';
 import { USDC_MINT, APP_IDENTITY } from '../utils/constants';
 
 function withTimeout<T>(promise: Promise<T>, ms: number, msg: string): Promise<T> {
@@ -15,20 +16,24 @@ export type NfcPaymentData = {
   amount: number;
   label: string;
   splToken: string;
+  reference?: string;
 };
 
 export function buildSolanaPayUrl(
   recipientAddress: string,
   usdcAmount: number,
   label: string = APP_IDENTITY.name
-): string {
+): { url: string; reference: string } {
+  const referenceKeypair = Keypair.generate();
+  const reference = referenceKeypair.publicKey.toBase58();
   const params = new URLSearchParams({
     amount: usdcAmount.toString(),
     'spl-token': USDC_MINT,
+    reference,
     label,
     message: 'PhasmaPay NFC Payment',
   });
-  return `solana:${recipientAddress}?${params.toString()}`;
+  return { url: `solana:${recipientAddress}?${params.toString()}`, reference };
 }
 
 export function parseSolanaPayUrl(url: string): NfcPaymentData | null {
@@ -44,6 +49,7 @@ export function parseSolanaPayUrl(url: string): NfcPaymentData | null {
       amount: parseFloat(params.get('amount') ?? '0'),
       label: params.get('label') ?? 'Unknown',
       splToken: params.get('spl-token') ?? USDC_MINT,
+      reference: params.get('reference') ?? undefined,
     };
   } catch {
     return null;
@@ -79,8 +85,8 @@ export async function writePaymentTag(
   recipientAddress: string,
   usdcAmount: number,
   label: string = APP_IDENTITY.name
-): Promise<void> {
-  const url = buildSolanaPayUrl(recipientAddress, usdcAmount, label);
+): Promise<string> {
+  const { url, reference } = buildSolanaPayUrl(recipientAddress, usdcAmount, label);
   // Cancel any stale request before starting a new one
   await NfcManager.cancelTechnologyRequest().catch(() => {});
   await NfcManager.requestTechnology(NfcTech.Ndef);
@@ -93,6 +99,7 @@ export async function writePaymentTag(
   } finally {
     await NfcManager.cancelTechnologyRequest();
   }
+  return reference;
 }
 
 export async function readPaymentTag(): Promise<NfcPaymentData | null> {

@@ -93,7 +93,7 @@ export function useNfc() {
 
   const startEmulation = useCallback(
     async (recipientAddress: string, amount: number, label?: string) => {
-      const url = buildSolanaPayUrl(recipientAddress, amount, label);
+      const { url } = buildSolanaPayUrl(recipientAddress, amount, label);
       try {
         await startHce(url);
         setState({ status: 'emulating' });

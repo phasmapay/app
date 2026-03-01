@@ -82,7 +82,7 @@ export function useGhostReceive() {
 
         // Step 3: start HCE emulation (phone acts as NFC tag for phone-to-phone)
         setState({ status: 'writing', ephemeralPubkey: ephPubkey, currentPaymentId: paymentId });
-        const payUrl = buildSolanaPayUrl(ephPubkey, amount, 'Ghost Pay');
+        const { url: payUrl } = buildSolanaPayUrl(ephPubkey, amount, 'Ghost Pay');
         try {
           await startHce(payUrl);
         } catch {

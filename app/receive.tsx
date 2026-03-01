@@ -164,7 +164,7 @@ export default function ReceiveScreen() {
             <View className="bg-[#141414] rounded-2xl p-4 mb-4 border border-[#1f1f1f]">
               <Text className="text-[#888] text-xs uppercase tracking-widest mb-2">Payment URL</Text>
               <Text className="text-[#555] text-xs" numberOfLines={2} selectable>
-                {buildSolanaPayUrl(publicKey.toBase58(), parseFloat(amount))}
+                {buildSolanaPayUrl(publicKey.toBase58(), parseFloat(amount)).url}
               </Text>
             </View>
           )}
@@ -220,7 +220,7 @@ export default function ReceiveScreen() {
                   className="rounded-2xl py-4 px-8 items-center mb-4"
                   style={{ backgroundColor: '#141414', borderWidth: 1, borderColor: '#9945FF' }}
                   onPress={() => {
-                    const url = buildSolanaPayUrl(publicKey.toBase58(), parseFloat(amount));
+                    const { url } = buildSolanaPayUrl(publicKey.toBase58(), parseFloat(amount));
                     Share.share({
                       message: `Pay me $${parseFloat(amount).toFixed(2)} USDC via PhasmaPay:\n${url}`,
                       url,
