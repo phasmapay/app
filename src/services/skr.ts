@@ -76,9 +76,9 @@ export function calculateCashback(
 export function getTierColor(tier: SkrTier): string {
   switch (tier) {
     case 'Gold': return '#FFD700';
-    case 'Silver': return '#C0C0C0';
-    case 'Bronze': return '#CD7F32';
-    case 'Ghost': return '#9945FF';
+    case 'Silver': return '#B8C5D6';
+    case 'Bronze': return '#D4845A';
+    case 'Ghost': return '#00FF88';
   }
 }
 

@@ -10,11 +10,12 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useWallet } from '../../src/context/WalletContext';
 import { useBalances } from '../../src/hooks/useBalances';
-import { getTierColor } from '../../src/services/skr';
+import { SkrTierCard } from '../../src/components/SkrTierCard';
+import { colors } from '../../src/design/tokens';
 import { getUnclaimedPayments } from '../../src/services/ghostPayment';
 import { shortAddress } from '../../src/utils/solana';
 import { Image, Linking } from 'react-native';
-import { ArrowUpIcon, ArrowDownIcon, DiamondIcon, NotificationIcon, SolanaIcon, GhostPayIcon, GhostReceiveIcon, GhostIcon } from '../../src/components/Icons';
+import { ArrowUpIcon, ArrowDownIcon, NotificationIcon, SolanaIcon, GhostPayIcon, GhostReceiveIcon, GhostIcon } from '../../src/components/Icons';
 
 function ActionButton({
   label, IconComponent, onPress, color,
@@ -67,7 +68,7 @@ export default function HomeScreen() {
 
   if (!isConnected) {
     return (
-      <SafeAreaView style={{ flex: 1, backgroundColor: '#0a0a0a' }}>
+      <SafeAreaView style={{ flex: 1, backgroundColor: colors.base }}>
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 40 }}>
           <View style={{
             width: 80, height: 80, borderRadius: 24, backgroundColor: '#151515',
@@ -99,13 +100,8 @@ export default function HomeScreen() {
     );
   }
 
-  const tierColor = getTierColor(skrStatus.tier as any);
-  const progress = skrStatus.nextTier
-    ? skrStatus.balance / (skrStatus.balance + skrStatus.nextTierRequirement)
-    : 1;
-
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#0a0a0a' }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: colors.base }}>
       <ScrollView
         style={{ flex: 1 }}
         contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 24 }}
@@ -160,7 +156,7 @@ export default function HomeScreen() {
         )}
 
         {/* Balance Card */}
-        <View style={{ backgroundColor: '#111', borderRadius: 20, padding: 24, marginBottom: 20 }}>
+        <View style={{ backgroundColor: colors.surface0, borderRadius: 20, padding: 24, marginBottom: 20 }}>
           <Text style={{ color: '#777', fontSize: 12, fontWeight: '500', letterSpacing: 0.5 }}>Balance</Text>
           {isLoading ? (
             <ActivityIndicator color="#9945FF" style={{ marginVertical: 20 }} />
@@ -174,7 +170,7 @@ export default function HomeScreen() {
               </View>
               <View style={{
                 flexDirection: 'row', alignItems: 'center', marginTop: 12,
-                backgroundColor: '#0a0a0a', borderRadius: 10, paddingHorizontal: 12, paddingVertical: 8,
+                backgroundColor: colors.base, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 8,
               }}>
                 <SolanaIcon size={16} color="#14F195" />
                 <Text style={{ color: '#ccc', fontSize: 14, fontWeight: '600', marginLeft: 6 }}>
@@ -221,42 +217,7 @@ export default function HomeScreen() {
         )}
 
         {/* SKR Rewards */}
-        <View style={{ backgroundColor: '#111', borderRadius: 20, padding: 20 }}>
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-              <DiamondIcon size={16} color={tierColor} />
-              <Text style={{ color: '#888', fontSize: 12, fontWeight: '600', letterSpacing: 0.5, marginLeft: 6 }}>
-                REWARDS
-              </Text>
-            </View>
-            <View style={{ backgroundColor: `${tierColor}15`, paddingHorizontal: 10, paddingVertical: 3, borderRadius: 8 }}>
-              <Text style={{ color: tierColor, fontSize: 11, fontWeight: '700' }}>{skrStatus.tier}</Text>
-            </View>
-          </View>
-
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' }}>
-            <Text style={{ color: '#fff', fontSize: 22, fontWeight: '700' }}>
-              {skrStatus.balance.toLocaleString()} SKR
-            </Text>
-            <Text style={{ color: '#14F195', fontSize: 13, fontWeight: '600' }}>
-              {(skrStatus.cashbackPct * 100).toFixed(1)}% back
-            </Text>
-          </View>
-
-          {skrStatus.nextTier && (
-            <View style={{ marginTop: 14 }}>
-              <View style={{ height: 4, backgroundColor: '#1a1a1a', borderRadius: 2, overflow: 'hidden' }}>
-                <View style={{
-                  height: 4, backgroundColor: tierColor, borderRadius: 2,
-                  width: `${Math.max(progress * 100, 3)}%`,
-                }} />
-              </View>
-              <Text style={{ color: '#555', fontSize: 11, marginTop: 6 }}>
-                {skrStatus.nextTierRequirement.toLocaleString()} more to {skrStatus.nextTier}
-              </Text>
-            </View>
-          )}
-        </View>
+        <SkrTierCard skrStatus={skrStatus} />
 
         <View style={{ height: 16 }} />
       </ScrollView>

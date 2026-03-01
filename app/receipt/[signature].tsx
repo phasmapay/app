@@ -8,6 +8,9 @@ import Animated, {
 } from 'react-native-reanimated';
 import { explorerUrl } from '../../src/utils/solana';
 import { SOLANA_NETWORK } from '../../src/utils/constants';
+import { SkrTierBadge } from '../../src/components/SkrTierBadge';
+import { getSkrTier, SkrTier } from '../../src/services/skr';
+import { colors } from '../../src/design/tokens';
 
 export default function ReceiptScreen() {
   const params = useLocalSearchParams<{
@@ -17,12 +20,16 @@ export default function ReceiptScreen() {
     cashback: string;
     savedGas: string;
     received: string;
+    skrBalance: string;
   }>();
 
   const amount = parseFloat(params.amount ?? '0');
   const cashback = parseFloat(params.cashback ?? '0');
   const savedGas = parseFloat(params.savedGas ?? '0');
+  const skrBalance = parseFloat(params.skrBalance ?? '0');
   const isReceived = params.received === 'true';
+
+  const skrStatus = getSkrTier(skrBalance);
 
   const scale = useSharedValue(0);
   const opacity = useSharedValue(0);
@@ -48,58 +55,72 @@ export default function ReceiptScreen() {
 
   const handleShare = async () => {
     await Share.share({
-      message: `Just paid $${amount.toFixed(2)} USDC via PhasmaPay 👻\nTx: ${explorerUrl(params.signature, SOLANA_NETWORK)}`,
+      message: `Just paid $${amount.toFixed(2)} USDC via PhasmaPay\nTx: ${explorerUrl(params.signature, SOLANA_NETWORK)}`,
     });
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-[#0a0a0a]">
-      <View className="flex-1 px-5 pt-8 items-center">
+    <SafeAreaView style={{ flex: 1, backgroundColor: colors.base }}>
+      <View style={{ flex: 1, paddingHorizontal: 20, paddingTop: 32, alignItems: 'center' }}>
         <Animated.View
           style={[circleStyle, {
             width: 96, height: 96, borderRadius: 48,
             backgroundColor: 'rgba(20,241,149,0.15)',
-            borderWidth: 2, borderColor: '#14F195',
+            borderWidth: 2, borderColor: colors.green,
             alignItems: 'center', justifyContent: 'center',
           }]}
         >
-          <Animated.Text style={[checkStyle, { fontSize: 48 }]}>✓</Animated.Text>
+          <Animated.Text style={[checkStyle, { fontSize: 48, color: colors.green }]}>✓</Animated.Text>
         </Animated.View>
-        <Text className="text-white text-3xl font-bold mt-4" style={{ textShadowColor: 'rgba(20,241,149,0.3)', textShadowOffset: {width:0,height:0}, textShadowRadius: 20 }}>
+
+        <Text style={{
+          color: colors.text, fontSize: 28, fontWeight: '700', marginTop: 16,
+          textShadowColor: 'rgba(20,241,149,0.3)',
+          textShadowOffset: { width: 0, height: 0 },
+          textShadowRadius: 20,
+        }}>
           {isReceived ? 'Payment Received!' : 'Payment Sent!'}
         </Text>
-        <Text className="text-[#888] text-sm mt-2">
+        <Text style={{ color: colors.textSub, fontSize: 14, marginTop: 8 }}>
           {isReceived ? 'USDC arrived in your wallet' : 'Transaction confirmed on Solana'}
         </Text>
 
-        <View className="w-full bg-[#141414] rounded-3xl p-6 mt-8 border border-[#1f1f1f]">
-          <View className="flex-row justify-between mb-4">
-            <Text className="text-[#888]">Amount</Text>
-            <Text className="text-white font-bold text-lg">${amount.toFixed(2)} USDC</Text>
+        <View style={{
+          width: '100%', backgroundColor: colors.surface1, borderRadius: 24,
+          padding: 24, marginTop: 32, borderWidth: 1, borderColor: colors.borderLit,
+        }}>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 16 }}>
+            <Text style={{ color: colors.textSub }}>Amount</Text>
+            <Text style={{ color: colors.text, fontWeight: '700', fontSize: 18 }}>
+              ${amount.toFixed(2)} USDC
+            </Text>
           </View>
 
           {savedGas > 0 && (
-            <View className="flex-row justify-between mb-4">
-              <Text className="text-[#888]">Route Savings</Text>
-              <Text className="text-[#14F195] font-bold">
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 16 }}>
+              <Text style={{ color: colors.textSub }}>Route Savings</Text>
+              <Text style={{ color: colors.green, fontWeight: '700' }}>
                 -${savedGas.toFixed(5)}
               </Text>
             </View>
           )}
 
           {cashback > 0 && (
-            <View className="flex-row justify-between mb-4">
-              <Text className="text-[#888]">SKR Cashback</Text>
-              <Text className="text-[#9945FF] font-bold">
-                +${cashback.toFixed(4)}
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <SkrTierBadge tier={skrStatus.tier} size="sm" />
+                <Text style={{ color: colors.textSub, marginLeft: 8 }}>SKR Cashback</Text>
+              </View>
+              <Text style={{ color: colors.green, fontWeight: '700' }}>
+                +{cashback.toFixed(4)} SKR
               </Text>
             </View>
           )}
 
           {params.signature ? (
-            <View className="border-t border-[#1f1f1f] pt-4">
-              <Text className="text-[#888] text-xs mb-1">Transaction</Text>
-              <Text className="text-[#555] text-xs" numberOfLines={1}>
+            <View style={{ borderTopWidth: 1, borderTopColor: colors.borderLit, paddingTop: 16 }}>
+              <Text style={{ color: colors.textSub, fontSize: 12, marginBottom: 4 }}>Transaction</Text>
+              <Text style={{ color: colors.textMute, fontSize: 12 }} numberOfLines={1}>
                 {params.signature}
               </Text>
             </View>
@@ -109,28 +130,39 @@ export default function ReceiptScreen() {
         {params.signature ? (
           <>
             <TouchableOpacity
-              className="w-full bg-[#141414] rounded-2xl py-4 items-center mt-4"
-              style={{ borderWidth: 1, borderColor: '#9945FF' }}
+              style={{
+                width: '100%', backgroundColor: colors.surface1, borderRadius: 16,
+                paddingVertical: 16, alignItems: 'center', marginTop: 16,
+                borderWidth: 1, borderColor: colors.purple,
+              }}
               onPress={handleViewExplorer}
             >
-              <Text style={{ color: '#9945FF', fontWeight: '600' }}>View on Solscan</Text>
+              <Text style={{ color: colors.purple, fontWeight: '600' }}>View on Solscan</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
-              className="w-full bg-[#141414] rounded-2xl py-4 items-center mt-3 border border-[#1f1f1f]"
+              style={{
+                width: '100%', backgroundColor: colors.surface1, borderRadius: 16,
+                paddingVertical: 16, alignItems: 'center', marginTop: 12,
+                borderWidth: 1, borderColor: colors.borderLit,
+              }}
               onPress={handleShare}
             >
-              <Text className="text-[#888] font-semibold">Share Receipt</Text>
+              <Text style={{ color: colors.textSub, fontWeight: '600' }}>Share Receipt</Text>
             </TouchableOpacity>
           </>
         ) : null}
 
         <TouchableOpacity
-          className="w-full rounded-2xl py-4 items-center mt-3"
-          style={{ backgroundColor: '#9945FF', shadowColor: '#9945FF', shadowOpacity: 0.4, shadowRadius: 12, shadowOffset: { width: 0, height: 0 }, elevation: 8 }}
+          style={{
+            width: '100%', borderRadius: 16, paddingVertical: 16, alignItems: 'center', marginTop: 12,
+            backgroundColor: colors.purple,
+            shadowColor: colors.purple, shadowOpacity: 0.4, shadowRadius: 12,
+            shadowOffset: { width: 0, height: 0 }, elevation: 8,
+          }}
           onPress={() => router.replace('/')}
         >
-          <Text className="text-white font-bold">Done</Text>
+          <Text style={{ color: '#fff', fontWeight: '700' }}>Done</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>
