@@ -5,6 +5,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useWallet } from '../../src/context/WalletContext';
 import { SOLANA_NETWORK, RPC_URL } from '../../src/utils/constants';
 import { shortAddress } from '../../src/utils/solana';
+import { useMode } from '../../src/context/ModeContext';
+import { colors, space, radius } from '../../src/design/tokens';
 
 function SettingRow({
   label,
@@ -21,7 +23,7 @@ function SettingRow({
     <TouchableOpacity
       style={{
         flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-        paddingVertical: 14, borderBottomWidth: 0.5, borderBottomColor: '#1a1a1a',
+        paddingVertical: 14, borderBottomWidth: 0.5, borderBottomColor: colors.surface2,
       }}
       onPress={onPress}
       disabled={!onPress}
@@ -35,6 +37,7 @@ function SettingRow({
 
 export default function SettingsScreen() {
   const { publicKey, isConnected, connect, disconnect } = useWallet();
+  const { mode, toggleMode } = useMode();
 
   const handleDisconnect = () => {
     Alert.alert(
@@ -48,11 +51,11 @@ export default function SettingsScreen() {
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#0a0a0a' }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: colors.base }}>
       <View style={{ flex: 1, paddingHorizontal: 20, paddingTop: 16 }}>
         <Text style={{ color: '#fff', fontSize: 22, fontWeight: '700', marginBottom: 24 }}>Settings</Text>
 
-        <View style={{ backgroundColor: '#111', borderRadius: 16, paddingHorizontal: 16, marginBottom: 16 }}>
+        <View style={{ backgroundColor: colors.surface0, borderRadius: 16, paddingHorizontal: 16, marginBottom: 16 }}>
           <Text style={{ color: '#777', fontSize: 11, fontWeight: '600', letterSpacing: 1, paddingTop: 14, paddingBottom: 4 }}>
             WALLET
           </Text>
@@ -74,15 +77,36 @@ export default function SettingsScreen() {
           <View style={{ height: 8 }} />
         </View>
 
-        <View style={{ backgroundColor: '#111', borderRadius: 16, paddingHorizontal: 16, marginBottom: 16 }}>
-          <Text style={{ color: '#777', fontSize: 11, fontWeight: '600', letterSpacing: 1, paddingTop: 14, paddingBottom: 4 }}>
+        <View style={{ backgroundColor: colors.surface0, borderRadius: 16, paddingHorizontal: 16, marginBottom: 16 }}>
+          <Text style={{ color: colors.textSub, fontSize: 11, fontWeight: '600', letterSpacing: 1, paddingTop: 14, paddingBottom: 4 }}>
+            MODE
+          </Text>
+          <TouchableOpacity
+            style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 14 }}
+            onPress={toggleMode}
+          >
+            <Text style={{ color: colors.textSub, fontSize: 14 }}>Merchant Mode</Text>
+            <View style={{
+              backgroundColor: mode === 'merchant' ? colors.purple : colors.surface2,
+              paddingHorizontal: 12, paddingVertical: 4, borderRadius: 8,
+            }}>
+              <Text style={{ color: mode === 'merchant' ? '#fff' : colors.textSub, fontSize: 12, fontWeight: '600' }}>
+                {mode === 'merchant' ? 'ON' : 'OFF'}
+              </Text>
+            </View>
+          </TouchableOpacity>
+          <View style={{ height: 8 }} />
+        </View>
+
+        <View style={{ backgroundColor: colors.surface0, borderRadius: 16, paddingHorizontal: 16, marginBottom: 16 }}>
+          <Text style={{ color: colors.textSub, fontSize: 11, fontWeight: '600', letterSpacing: 1, paddingTop: 14, paddingBottom: 4 }}>
             APP
           </Text>
           <SettingRow label="Version" value="1.0.0" />
           <View style={{ height: 8 }} />
         </View>
 
-        <View style={{ backgroundColor: '#111', borderRadius: 16, paddingHorizontal: 16, marginBottom: 16 }}>
+        <View style={{ backgroundColor: colors.surface0, borderRadius: 16, paddingHorizontal: 16, marginBottom: 16 }}>
           <Text style={{ color: '#777', fontSize: 11, fontWeight: '600', letterSpacing: 1, paddingTop: 14, paddingBottom: 4 }}>
             DATA
           </Text>

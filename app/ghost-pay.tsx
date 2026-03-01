@@ -4,98 +4,14 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
-import Animated, {
-  useSharedValue, useAnimatedStyle,
-  withRepeat, withTiming, withSequence, withSpring, Easing,
-} from 'react-native-reanimated';
 import { useWallet } from '../src/context/WalletContext';
 import { useNfc } from '../src/hooks/useNfc';
 import { mockNfcRead, enableForegroundNfc, disableForegroundNfc } from '../src/services/nfc';
 import { usePayment } from '../src/hooks/usePayment';
 import { useBalances } from '../src/hooks/useBalances';
-
-const ghostIcon = require('../ghost.png');
-
-function NfcRipple({ scanning }: { scanning: boolean }) {
-  const ring1 = useSharedValue(1);
-  const ring2 = useSharedValue(1);
-  const ring3 = useSharedValue(1);
-  const opacity1 = useSharedValue(0.6);
-  const opacity2 = useSharedValue(0.4);
-  const opacity3 = useSharedValue(0.2);
-
-  useEffect(() => {
-    if (scanning) {
-      ring1.value = withRepeat(withTiming(1.6, { duration: 1500, easing: Easing.out(Easing.ease) }), -1);
-      ring2.value = withRepeat(
-        withSequence(withTiming(1, { duration: 500 }), withTiming(1.6, { duration: 1500, easing: Easing.out(Easing.ease) })),
-        -1,
-      );
-      ring3.value = withRepeat(
-        withSequence(withTiming(1, { duration: 1000 }), withTiming(1.6, { duration: 1500, easing: Easing.out(Easing.ease) })),
-        -1,
-      );
-      opacity1.value = withRepeat(withTiming(0, { duration: 1500 }), -1);
-      opacity2.value = withRepeat(
-        withSequence(withTiming(0.4, { duration: 500 }), withTiming(0, { duration: 1500 })),
-        -1,
-      );
-      opacity3.value = withRepeat(
-        withSequence(withTiming(0.2, { duration: 1000 }), withTiming(0, { duration: 1500 })),
-        -1,
-      );
-    } else {
-      ring1.value = withSpring(1);
-      ring2.value = withSpring(1);
-      ring3.value = withSpring(1);
-      opacity1.value = withTiming(0.6);
-      opacity2.value = withTiming(0.4);
-      opacity3.value = withTiming(0.2);
-    }
-  }, [scanning]);
-
-  const style1 = useAnimatedStyle(() => ({
-    transform: [{ scale: ring1.value }],
-    opacity: opacity1.value,
-  }));
-  const style2 = useAnimatedStyle(() => ({
-    transform: [{ scale: ring2.value }],
-    opacity: opacity2.value,
-  }));
-  const style3 = useAnimatedStyle(() => ({
-    transform: [{ scale: ring3.value }],
-    opacity: opacity3.value,
-  }));
-
-  return (
-    <View className="w-56 h-56 items-center justify-center">
-      <Animated.View
-        style={[style3, {
-          position: 'absolute', width: 224, height: 224,
-          borderRadius: 112, backgroundColor: 'rgba(153,69,255,0.08)',
-        }]}
-      />
-      <Animated.View
-        style={[style2, {
-          position: 'absolute', width: 176, height: 176,
-          borderRadius: 88, backgroundColor: 'rgba(153,69,255,0.12)',
-        }]}
-      />
-      <Animated.View
-        style={[style1, {
-          position: 'absolute', width: 128, height: 128,
-          borderRadius: 64, backgroundColor: 'rgba(153,69,255,0.18)',
-        }]}
-      />
-      <View
-        className="w-24 h-24 rounded-full items-center justify-center"
-        style={{ backgroundColor: 'rgba(153,69,255,0.3)', borderWidth: 2, borderColor: '#9945FF' }}
-      >
-        <Image source={ghostIcon} style={{ width: 48, height: 48, tintColor: '#9945FF' }} />
-      </View>
-    </View>
-  );
-}
+import { NfcRipple } from '../src/components/NfcRipple';
+import { GlassCard } from '../src/components/GlassCard';
+import { colors, space, radius } from '../src/design/tokens';
 
 export default function GhostPayScreen() {
   const { publicKey, authToken } = useWallet();
@@ -137,8 +53,8 @@ export default function GhostPayScreen() {
     }
   }, [payState.status]);
 
-  const tapCount = useSharedValue(0);
-  const lastTapTime = useSharedValue(0);
+  const tapCount = React.useRef(0);
+  const lastTapTime = React.useRef(0);
   const tapResetTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const handleReset = useCallback(() => {
@@ -150,25 +66,21 @@ export default function GhostPayScreen() {
   const handleDevTap = useCallback(() => {
     if (payState.status !== 'idle') return;
     const now = Date.now();
-    if (now - lastTapTime.value > 800) {
-      tapCount.value = 1;
+    if (now - lastTapTime.current > 800) {
+      tapCount.current = 1;
     } else {
-      tapCount.value += 1;
+      tapCount.current += 1;
     }
-    lastTapTime.value = now;
+    lastTapTime.current = now;
 
     if (tapResetTimer.current) clearTimeout(tapResetTimer.current);
-    tapResetTimer.current = setTimeout(() => { tapCount.value = 0; }, 800);
+    tapResetTimer.current = setTimeout(() => { tapCount.current = 0; }, 800);
 
-    if (tapCount.value >= 3) {
-      tapCount.value = 0;
-      const mockData = mockNfcRead(
-        '7xKXtg2CW87d97TXJSDpbD5jBkheTqA3esVKk3X7DHhP',
-        1.00,
-      );
-      prepare(mockData);
+    if (tapCount.current >= 3) {
+      tapCount.current = 0;
+      prepare(mockNfcRead('7xKXtg2CW87d97TXJSDpbD5jBkheTqA3esVKk3X7DHhP', 1.00));
     }
-  }, [prepare]);
+  }, [payState.status, prepare]);
 
   const isScanning = nfcState.status === 'scanning';
   const isProcessing = ['optimizing', 'signing', 'confirming'].includes(payState.status);
@@ -176,6 +88,10 @@ export default function GhostPayScreen() {
   const errorMessage =
     (nfcState.status === 'error' && nfcState.message) ||
     (payState.status === 'error' && payState.message) || '';
+
+  const nfcStage = isScanning ? 'scanning' as const
+    : isProcessing ? 'processing' as const
+    : 'idle' as const;
 
   const getStatusText = () => {
     if (isScanning) return 'Hold near Ghost NFC tag...';
@@ -187,135 +103,134 @@ export default function GhostPayScreen() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-[#0a0a0a]">
-      <View className="flex-1 px-5 pt-6 items-center">
-        <Text className="text-white text-3xl font-bold mb-2 self-start">Ghost Pay</Text>
-        <Text className="text-[#888] text-sm mb-10 self-start">
-          Private one-time address payment
+    <SafeAreaView style={{ flex: 1, backgroundColor: colors.base }}>
+      <View style={{ flex: 1, paddingHorizontal: space.lg, paddingTop: space.xl, alignItems: 'center' }}>
+        <Text style={{ color: colors.text, fontSize: 28, fontWeight: '700', marginBottom: space.sm, alignSelf: 'flex-start' }}>
+          Ghost Pay
         </Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: space.xxxl, alignSelf: 'flex-start' }}>
+          <View style={{
+            backgroundColor: colors.ghostDim, paddingHorizontal: 10, paddingVertical: 4,
+            borderRadius: radius.sm, flexDirection: 'row', alignItems: 'center',
+          }}>
+            <Text style={{ color: colors.ghost, fontSize: 11, fontWeight: '700' }}>GHOST MODE</Text>
+          </View>
+          <Text style={{ color: colors.textSub, fontSize: 13, marginLeft: space.sm }}>
+            One-time address payment
+          </Text>
+        </View>
 
-        {/* NFC Animation */}
+        {/* NFC Animation — ghost green */}
         <TouchableOpacity onPress={handleDevTap} activeOpacity={1}>
-          <NfcRipple scanning={isScanning || isProcessing} />
+          <NfcRipple stage={nfcStage} ghost />
         </TouchableOpacity>
 
         {/* Status */}
         <Text
-          className="text-lg mt-8 font-semibold text-center"
-          style={{ color: hasError ? '#FF4747' : isScanning ? '#9945FF' : '#888888', letterSpacing: 0.5 }}
+          style={{
+            fontSize: 18, marginTop: space.xxl, fontWeight: '600', textAlign: 'center',
+            color: hasError ? colors.error : isScanning ? colors.ghost : colors.textSub,
+            letterSpacing: 0.5,
+          }}
         >
           {getStatusText()}
         </Text>
 
-
         {/* Payment confirmation card */}
         {payState.status === 'awaiting_approval' && (
-          <View className="w-full bg-[#141414] rounded-3xl p-5 mt-6 border border-[#9945FF]">
-            <Text className="text-[#888] text-xs uppercase tracking-widest mb-3">Confirm Ghost Payment</Text>
+          <GlassCard glow={colors.ghost} style={{ width: '100%', padding: space.lg, marginTop: space.xl }}>
+            <Text style={{ color: colors.textSub, fontSize: 10, textTransform: 'uppercase', letterSpacing: 2, marginBottom: space.md }}>
+              Confirm Ghost Payment
+            </Text>
 
-            {/* Ghost Mode badge */}
             <View style={{
               flexDirection: 'row', alignItems: 'center',
-              backgroundColor: 'rgba(153,69,255,0.15)', borderRadius: 8,
-              padding: 8, marginBottom: 12,
+              backgroundColor: colors.ghostDim, borderRadius: radius.sm,
+              padding: space.sm, marginBottom: space.md,
             }}>
-              <Image source={ghostIcon} style={{ width: 14, height: 14, tintColor: '#9945FF', marginRight: 4 }} />
-              <Text style={{ color: '#9945FF', fontSize: 13, fontWeight: '600' }}>
+              <Text style={{ color: colors.ghost, fontSize: 13, fontWeight: '600' }}>
                 Ghost Mode — one-time address
               </Text>
             </View>
 
-            <View className="flex-row justify-between mb-3">
-              <Text className="text-[#888]">Amount</Text>
-              <Text className="text-white font-bold text-lg">
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: space.md }}>
+              <Text style={{ color: colors.textSub }}>Amount</Text>
+              <Text style={{ color: colors.text, fontWeight: '700', fontSize: 18, fontFamily: 'JetBrainsMono-Bold' }}>
                 ${payState.paymentData.amount.toFixed(2)} USDC
               </Text>
             </View>
-            <View className="flex-row justify-between mb-3">
-              <Text className="text-[#888]">Recipient</Text>
-              <Text className="text-[#555] text-sm" numberOfLines={1}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: space.md }}>
+              <Text style={{ color: colors.textSub }}>Recipient</Text>
+              <Text style={{ color: colors.textMute, fontSize: 14 }} numberOfLines={1}>
                 {payState.paymentData.recipient
                   ? `${payState.paymentData.recipient.slice(0, 6)}...${payState.paymentData.recipient.slice(-4)} (stealth)`
-                  : '—'}
+                  : '-'}
               </Text>
             </View>
-            <View className="flex-row justify-between mb-4">
-              <Text className="text-[#888]">Strategy</Text>
-              <Text className="text-[#14F195] font-semibold capitalize">
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: space.base }}>
+              <Text style={{ color: colors.textSub }}>Strategy</Text>
+              <Text style={{ color: colors.green, fontWeight: '600', textTransform: 'capitalize' }}>
                 {payState.optimization.strategy} transfer
               </Text>
             </View>
             {payState.optimization.savedGas > 0 && (
-              <View className="flex-row justify-between mb-4">
-                <Text className="text-[#888]">Route Savings</Text>
-                <Text className="text-[#14F195] font-semibold">
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: space.base }}>
+                <Text style={{ color: colors.textSub }}>Route Savings</Text>
+                <Text style={{ color: colors.green, fontWeight: '600' }}>
                   ${payState.optimization.savedGas.toFixed(5)}
                 </Text>
               </View>
             )}
-            <View className="flex-row gap-3">
+            <View style={{ flexDirection: 'row', gap: space.md }}>
               <TouchableOpacity
-                className="flex-1 bg-[#1f1f1f] rounded-2xl py-4 items-center"
+                style={{ flex: 1, backgroundColor: colors.surface2, borderRadius: radius.lg, paddingVertical: space.base, alignItems: 'center' }}
                 onPress={handleReset}
               >
-                <Text className="text-[#888] font-semibold">Cancel</Text>
+                <Text style={{ color: colors.textSub, fontWeight: '600' }}>Cancel</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                className="flex-1 rounded-2xl py-4 items-center"
-                style={{ backgroundColor: '#9945FF' }}
+                style={{ flex: 1, backgroundColor: colors.ghost, borderRadius: radius.lg, paddingVertical: space.base, alignItems: 'center' }}
                 onPress={confirm}
               >
-                <Text className="text-white font-bold">Confirm</Text>
+                <Text style={{ color: colors.base, fontWeight: '700' }}>Confirm</Text>
               </TouchableOpacity>
             </View>
-          </View>
+          </GlassCard>
         )}
 
-        {/* Scan / Error buttons */}
+        {/* Bottom buttons */}
         {payState.status !== 'awaiting_approval' && (
-          <View style={{ position: 'absolute', bottom: 90, left: 20, right: 20 }}>
+          <View style={{ position: 'absolute', bottom: 90, left: space.lg, right: space.lg }}>
             {hasError ? (
               <View>
-                <Text className="text-[#FF4747] text-center text-sm mb-4">{errorMessage}</Text>
+                <Text style={{ color: colors.error, textAlign: 'center', fontSize: 14, marginBottom: space.base }}>{errorMessage}</Text>
                 <TouchableOpacity
-                  className="rounded-2xl py-5 items-center"
-                  style={{ backgroundColor: '#9945FF' }}
+                  style={{ backgroundColor: colors.ghost, borderRadius: radius.lg, paddingVertical: space.lg, alignItems: 'center' }}
                   onPress={handleReset}
                 >
-                  <Text className="text-white font-bold text-lg">Try Again</Text>
+                  <Text style={{ color: colors.base, fontWeight: '700', fontSize: 17 }}>Try Again</Text>
                 </TouchableOpacity>
               </View>
             ) : isScanning || isProcessing ? (
               <TouchableOpacity
-                className="rounded-2xl py-5 items-center bg-[#141414] border border-[#1f1f1f]"
+                style={{ backgroundColor: colors.surface1, borderRadius: radius.lg, paddingVertical: space.lg, alignItems: 'center', borderWidth: 1, borderColor: colors.surface2 }}
                 onPress={handleReset}
               >
-                <ActivityIndicator color="#9945FF" />
-                <Text className="text-[#888] text-sm mt-2">Cancel</Text>
+                <ActivityIndicator color={colors.ghost} />
+                <Text style={{ color: colors.textSub, fontSize: 14, marginTop: space.sm }}>Cancel</Text>
               </TouchableOpacity>
             ) : (
               <TouchableOpacity
-                className="rounded-2xl py-5 items-center"
-                style={{ backgroundColor: '#9945FF' }}
+                style={{ backgroundColor: colors.ghost, borderRadius: radius.lg, paddingVertical: space.lg, alignItems: 'center' }}
                 onPress={
                   nfcState.status === 'disabled'
-                    ? () => Alert.alert(
-                        'NFC is Disabled',
-                        'Please enable NFC in your device settings before continuing.',
-                        [{ text: 'OK' }],
-                      )
+                    ? () => Alert.alert('NFC is Disabled', 'Please enable NFC in your device settings.', [{ text: 'OK' }])
                     : nfcState.status === 'unsupported'
-                    ? () => Alert.alert(
-                        'NFC Not Supported',
-                        'Your device does not have NFC hardware. NFC tap-to-pay requires a device with NFC.',
-                        [{ text: 'OK' }],
-                      )
+                    ? () => Alert.alert('NFC Not Supported', 'Your device does not have NFC hardware.', [{ text: 'OK' }])
                     : startScan
                 }
               >
-                <Text className="text-white font-bold text-lg">
-                  Scan Ghost Tag
-                </Text>
+                <Text style={{ color: colors.base, fontWeight: '700', fontSize: 17 }}>Scan Ghost Tag</Text>
               </TouchableOpacity>
             )}
           </View>

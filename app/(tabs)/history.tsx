@@ -4,52 +4,56 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { getTransactions, getTotalCashback, getTotalSavedGas, StoredTransaction } from '../../src/services/storage';
 import { shortAddress, explorerUrl } from '../../src/utils/solana';
 import { SOLANA_NETWORK } from '../../src/utils/constants';
-import { ArrowUpIcon, ArrowDownIcon } from '../../src/components/Icons';
+import { ArrowUpIcon, ArrowDownIcon, GhostIcon } from '../../src/components/Icons';
+import { GlassCard } from '../../src/components/GlassCard';
+import { EmptyState } from '../../src/components/EmptyState';
+import { colors, space, radius } from '../../src/design/tokens';
 
 function TxRow({ tx }: { tx: StoredTransaction }) {
   const isReceived = tx.type === 'received' || tx.strategy === 'received';
   const date = new Date(tx.timestamp).toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
+    month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit',
   });
 
   return (
     <TouchableOpacity
-      className="bg-[#141414] rounded-2xl p-4 mb-3 border border-[#1f1f1f]"
-      style={{ borderLeftWidth: 2, borderLeftColor: isReceived ? '#14F19533' : '#9945FF22' }}
+      style={{
+        backgroundColor: colors.surface1, borderRadius: radius.lg,
+        padding: space.base, marginBottom: space.md,
+        borderLeftWidth: 2, borderLeftColor: isReceived ? colors.greenDim : colors.purpleDim,
+      }}
       onPress={() => {
         if (tx.signature) {
-          const url = explorerUrl(tx.signature, SOLANA_NETWORK);
-          console.log('[History] opening:', url);
-          Linking.openURL(url);
+          Linking.openURL(explorerUrl(tx.signature, SOLANA_NETWORK));
         }
       }}
     >
-      <View className="flex-row justify-between items-start">
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
         <View>
-          <Text className="text-white font-semibold text-base">
+          <Text style={{ color: colors.text, fontWeight: '600', fontSize: 16, fontFamily: 'JetBrainsMono-Bold' }}>
             {isReceived ? '+' : '-'}${tx.amount.toFixed(2)} USDC
           </Text>
-          <Text className="text-[#888] text-xs mt-1">
+          <Text style={{ color: colors.textSub, fontSize: 12, marginTop: 4 }}>
             {isReceived ? 'Received via NFC' : `To: ${shortAddress(tx.recipient)}`}
           </Text>
-          <Text className="text-[#888] text-xs">{date}</Text>
+          <Text style={{ color: colors.textSub, fontSize: 12 }}>{date}</Text>
         </View>
-        <View className="items-end">
-          <View style={{ width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center', backgroundColor: isReceived ? 'rgba(20,241,149,0.1)' : 'rgba(153,69,255,0.1)' }}>
+        <View style={{ alignItems: 'flex-end' }}>
+          <View style={{
+            width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center',
+            backgroundColor: isReceived ? colors.greenDim : colors.purpleDim,
+          }}>
             {isReceived
-              ? <ArrowDownIcon size={16} color="#14F195" />
-              : <ArrowUpIcon size={16} color="#9945FF" />}
+              ? <ArrowDownIcon size={16} color={colors.green} />
+              : <ArrowUpIcon size={16} color={colors.purple} />}
           </View>
           {tx.savedGas > 0 && (
-            <Text className="text-[#14F195] text-xs font-semibold mt-1">
+            <Text style={{ color: colors.green, fontSize: 12, fontWeight: '600', marginTop: 4 }}>
               Route saved ${tx.savedGas.toFixed(5)}
             </Text>
           )}
           {tx.cashback > 0 && (
-            <Text className="text-[#9945FF] text-xs font-semibold mt-1">
+            <Text style={{ color: colors.purple, fontSize: 12, fontWeight: '600', marginTop: 4 }}>
               +${tx.cashback.toFixed(4)} cashback
             </Text>
           )}
@@ -70,7 +74,6 @@ export default function HistoryScreen() {
       getTotalCashback(),
       getTotalSavedGas(),
     ]).then(([txs, cashback, gas]) => {
-      // Only show transactions with real on-chain signatures
       setTransactions(txs.filter(tx => tx.signature && tx.signature.length > 10));
       setTotalCashback(cashback);
       setTotalSavedGas(gas);
@@ -78,29 +81,35 @@ export default function HistoryScreen() {
   }, []);
 
   return (
-    <SafeAreaView className="flex-1 bg-[#0a0a0a]">
-      <View className="flex-1 px-5 pt-4">
-        <Text className="text-white text-2xl font-bold mb-6">History</Text>
+    <SafeAreaView style={{ flex: 1, backgroundColor: colors.base }}>
+      <View style={{ flex: 1, paddingHorizontal: space.lg, paddingTop: space.base }}>
+        <Text style={{ color: colors.text, fontSize: 22, fontWeight: '700', marginBottom: space.xl }}>History</Text>
         {transactions.length > 0 && (
-          <View className="flex-row gap-3 mb-5">
-            <View className="flex-1 bg-[#141414] rounded-2xl p-4 border border-[#1f1f1f]">
-              <Text className="text-[#888] text-xs uppercase tracking-widest mb-1">Total Cashback</Text>
-              <Text className="text-[#9945FF] text-lg font-bold">${totalCashback.toFixed(4)}</Text>
-            </View>
-            <View className="flex-1 bg-[#141414] rounded-2xl p-4 border border-[#1f1f1f]">
-              <Text className="text-[#888] text-xs uppercase tracking-widest mb-1">Route Savings</Text>
-              <Text className="text-[#14F195] text-lg font-bold">${totalSavedGas.toFixed(5)}</Text>
-            </View>
+          <View style={{ flexDirection: 'row', gap: space.md, marginBottom: space.lg }}>
+            <GlassCard style={{ flex: 1, padding: space.base }}>
+              <Text style={{ color: colors.textSub, fontSize: 10, textTransform: 'uppercase', letterSpacing: 2, marginBottom: 4 }}>
+                Total Cashback
+              </Text>
+              <Text style={{ color: colors.purple, fontSize: 18, fontWeight: '700', fontFamily: 'JetBrainsMono-Bold' }}>
+                ${totalCashback.toFixed(4)}
+              </Text>
+            </GlassCard>
+            <GlassCard style={{ flex: 1, padding: space.base }}>
+              <Text style={{ color: colors.textSub, fontSize: 10, textTransform: 'uppercase', letterSpacing: 2, marginBottom: 4 }}>
+                Route Savings
+              </Text>
+              <Text style={{ color: colors.green, fontSize: 18, fontWeight: '700', fontFamily: 'JetBrainsMono-Bold' }}>
+                ${totalSavedGas.toFixed(5)}
+              </Text>
+            </GlassCard>
           </View>
         )}
         {transactions.length === 0 ? (
-          <View className="flex-1 items-center justify-center">
-            <View style={{ width: 64, height: 64, borderRadius: 32, borderWidth: 2, borderColor: '#1f1f1f', alignItems: 'center', justifyContent: 'center' }}>
-              <Text style={{ color: '#333', fontSize: 28 }}>↓</Text>
-            </View>
-            <Text className="text-[#888] text-base mt-4">No transactions yet</Text>
-            <Text className="text-[#555] text-sm mt-2">Tap to pay and see your history here</Text>
-          </View>
+          <EmptyState
+            icon={<GhostIcon size={64} color={colors.textMute} />}
+            title="No hauntings yet"
+            subtitle="Tap to pay and see your history here"
+          />
         ) : (
           <FlatList
             data={transactions}

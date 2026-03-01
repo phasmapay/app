@@ -27,6 +27,9 @@ import { useWallet } from '../src/context/WalletContext';
 import { getConnection } from '../src/utils/solana';
 import { USDC_MINT, USDC_DECIMALS, APP_IDENTITY } from '../src/utils/constants';
 import { GhostIcon } from '../src/components/Icons';
+import { EmptyState } from '../src/components/EmptyState';
+import { GlassCard } from '../src/components/GlassCard';
+import { colors, space, radius } from '../src/design/tokens';
 
 type ClaimableItem = UnclaimedPayment & {
   onChainBalance: bigint; // actual USDC in the ephemeral ATA
@@ -195,7 +198,7 @@ export default function ClaimableScreen() {
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#0a0a0a' }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: colors.base }}>
       <View style={{ flex: 1, paddingHorizontal: 20, paddingTop: 16 }}>
         {/* Header */}
         <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 24 }}>
@@ -227,7 +230,7 @@ export default function ClaimableScreen() {
           <>
             {/* Total banner */}
             <View style={{
-              backgroundColor: '#111', borderRadius: 20, padding: 20, marginBottom: 16,
+              backgroundColor: colors.surface0, borderRadius: 20, padding: 20, marginBottom: 16,
               borderWidth: 1, borderColor: '#14F195',
             }}>
               <Text style={{ color: '#888', fontSize: 12, fontWeight: '500', letterSpacing: 0.5 }}>
