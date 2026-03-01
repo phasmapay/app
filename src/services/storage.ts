@@ -1,5 +1,14 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+export type MerchantTransaction = {
+  signature: string;
+  sender: string;
+  amount: number;
+  timestamp: number;
+  reference?: string;
+  confirmed: boolean;
+};
+
 export type StoredTransaction = {
   signature: string;
   sender: string;
@@ -18,6 +27,8 @@ const KEYS = {
   TRANSACTIONS: 'phasma:transactions',
   TOTAL_CASHBACK: 'phasma:total_cashback',
   TOTAL_SAVED_GAS: 'phasma:total_saved_gas',
+  MERCHANT_TRANSACTIONS: 'phasma:merchant_transactions',
+  MERCHANT_CONFIG: 'phasma:merchant_config',
 } as const;
 
 export async function saveAuthToken(token: string, address: string): Promise<void> {
@@ -87,65 +98,51 @@ export async function clearTransactions(): Promise<void> {
 
 // --- Merchant Mode Storage ---
 
-const MERCHANT_TX_KEY = 'phasma:merchant_transactions';
-const MERCHANT_CONFIG_KEY = 'phasma:merchant_config';
-
-export type MerchantTransaction = {
-  signature: string;
-  sender: string;
-  amount: number;
-  timestamp: number;
-  reference?: string;
-  confirmed: boolean;
-};
-
 export async function saveMerchantTransaction(tx: MerchantTransaction): Promise<void> {
-  const existing = await getMerchantTransactions();
-  const updated = [tx, ...existing.transactions].slice(0, 200);
-  await AsyncStorage.setItem(MERCHANT_TX_KEY, JSON.stringify(updated));
+  const existing = await getMerchantTransactionsRaw();
+  const updated = [tx, ...existing].slice(0, 200);
+  await AsyncStorage.setItem(KEYS.MERCHANT_TRANSACTIONS, JSON.stringify(updated));
+}
+
+async function getMerchantTransactionsRaw(): Promise<MerchantTransaction[]> {
+  const raw = await AsyncStorage.getItem(KEYS.MERCHANT_TRANSACTIONS);
+  if (!raw) return [];
+  try {
+    return JSON.parse(raw) as MerchantTransaction[];
+  } catch {
+    return [];
+  }
 }
 
 export async function getMerchantTransactions(
   page = 0,
-  pageSize = 20
+  pageSize = 50,
 ): Promise<{ transactions: MerchantTransaction[]; hasMore: boolean }> {
-  const raw = await AsyncStorage.getItem(MERCHANT_TX_KEY);
-  if (!raw) return { transactions: [], hasMore: false };
-  try {
-    const all: MerchantTransaction[] = JSON.parse(raw);
-    const start = page * pageSize;
-    const transactions = all.slice(start, start + pageSize);
-    return { transactions, hasMore: start + pageSize < all.length };
-  } catch {
-    return { transactions: [], hasMore: false };
-  }
+  const all = await getMerchantTransactionsRaw();
+  const start = page * pageSize;
+  const slice = all.slice(start, start + pageSize);
+  return { transactions: slice, hasMore: start + pageSize < all.length };
 }
 
 export async function getMerchantDaySummary(): Promise<{ count: number; total: number }> {
-  const raw = await AsyncStorage.getItem(MERCHANT_TX_KEY);
-  if (!raw) return { count: 0, total: 0 };
-  try {
-    const all: MerchantTransaction[] = JSON.parse(raw);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const todayMs = today.getTime();
-    const todayTxs = all.filter(t => t.timestamp >= todayMs);
-    return {
-      count: todayTxs.length,
-      total: todayTxs.reduce((sum, t) => sum + t.amount, 0),
-    };
-  } catch {
-    return { count: 0, total: 0 };
-  }
+  const all = await getMerchantTransactionsRaw();
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const todayMs = today.getTime();
+  const todayTxs = all.filter(t => t.timestamp >= todayMs);
+  return {
+    count: todayTxs.length,
+    total: todayTxs.reduce((sum, t) => sum + t.amount, 0),
+  };
 }
 
 export async function saveMerchantConfig(config: { enabled: boolean; businessName: string }): Promise<void> {
-  await AsyncStorage.setItem(MERCHANT_CONFIG_KEY, JSON.stringify(config));
+  await AsyncStorage.setItem(KEYS.MERCHANT_CONFIG, JSON.stringify(config));
 }
 
 export async function loadMerchantConfig(): Promise<{ enabled: boolean; businessName: string }> {
   try {
-    const raw = await AsyncStorage.getItem(MERCHANT_CONFIG_KEY);
+    const raw = await AsyncStorage.getItem(KEYS.MERCHANT_CONFIG);
     if (!raw) return { enabled: false, businessName: '' };
     return JSON.parse(raw);
   } catch {

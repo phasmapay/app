@@ -93,13 +93,13 @@ export async function writePaymentTag(
   try {
     const bytes = Ndef.encodeMessage([Ndef.uriRecord(url)]);
     await NfcManager.ndefHandler.writeNdefMessage(bytes);
+    return reference;
   } catch (err) {
     console.warn('[NFC] writePaymentTag failed:', err);
     throw err;
   } finally {
     await NfcManager.cancelTechnologyRequest();
   }
-  return reference;
 }
 
 export async function readPaymentTag(): Promise<NfcPaymentData | null> {

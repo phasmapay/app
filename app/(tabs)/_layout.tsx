@@ -1,6 +1,11 @@
 import { Tabs } from 'expo-router';
 import { View, Text } from 'react-native';
-import { HomeIcon, HomeOutlineIcon, TimeIcon, TimeOutlineIcon, SettingsIcon, SettingsOutlineIcon } from '../../src/components/Icons';
+import { useMode } from '../../src/context/ModeContext';
+import {
+  HomeIcon, HomeOutlineIcon, TimeIcon, TimeOutlineIcon,
+  SettingsIcon, SettingsOutlineIcon, MerchantIcon, MerchantOutlineIcon,
+} from '../../src/components/Icons';
+import { colors } from '../../src/design/tokens';
 
 function TabIcon({ focused, label, ActiveIcon, InactiveIcon }: {
   focused: boolean;
@@ -8,7 +13,7 @@ function TabIcon({ focused, label, ActiveIcon, InactiveIcon }: {
   ActiveIcon: React.FC<{ size?: number; color?: string }>;
   InactiveIcon: React.FC<{ size?: number; color?: string }>;
 }) {
-  const color = focused ? '#9945FF' : '#666';
+  const color = focused ? colors.purple : '#666';
   const Icon = focused ? ActiveIcon : InactiveIcon;
   return (
     <View style={{ alignItems: 'center', justifyContent: 'center', width: 80, paddingTop: 4 }}>
@@ -21,13 +26,15 @@ function TabIcon({ focused, label, ActiveIcon, InactiveIcon }: {
 }
 
 export default function TabLayout() {
+  const { mode } = useMode();
+
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
         tabBarStyle: {
-          backgroundColor: '#0a0a0a',
-          borderTopColor: '#1a1a1a',
+          backgroundColor: colors.base,
+          borderTopColor: colors.surface2,
           borderTopWidth: 0.5,
           height: 68,
           paddingBottom: 4,
@@ -41,6 +48,15 @@ export default function TabLayout() {
           tabBarIcon: ({ focused }) => (
             <TabIcon focused={focused} label="Home" ActiveIcon={HomeIcon} InactiveIcon={HomeOutlineIcon} />
           ),
+        }}
+      />
+      <Tabs.Screen
+        name="merchant"
+        options={{
+          tabBarIcon: ({ focused }) => (
+            <TabIcon focused={focused} label="Merchant" ActiveIcon={MerchantIcon} InactiveIcon={MerchantOutlineIcon} />
+          ),
+          href: mode === 'merchant' ? '/(tabs)/merchant' : null,
         }}
       />
       <Tabs.Screen

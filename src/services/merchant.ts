@@ -1,10 +1,5 @@
 import { Connection, PublicKey } from '@solana/web3.js';
 
-export type MerchantConfig = {
-  enabled: boolean;
-  businessName: string;
-};
-
 export function pollForPaymentByReference(
   connection: Connection,
   referencePubkey: PublicKey,
@@ -13,34 +8,39 @@ export function pollForPaymentByReference(
   pollIntervalMs = 1500,
   timeoutMs = 180_000,
 ): () => void {
-  let cancelled = false;
+  let stopped = false;
+  let intervalId: ReturnType<typeof setInterval>;
+  let timeoutId: ReturnType<typeof setTimeout>;
 
-  const timeoutId = setTimeout(() => {
-    if (!cancelled) {
-      cancelled = true;
-      clearInterval(intervalId);
+  const cleanup = () => {
+    stopped = true;
+    clearInterval(intervalId);
+    clearTimeout(timeoutId);
+  };
+
+  timeoutId = setTimeout(() => {
+    if (!stopped) {
+      cleanup();
       onTimeout();
     }
   }, timeoutMs);
 
-  const intervalId = setInterval(async () => {
-    if (cancelled) return;
+  const poll = async () => {
+    if (stopped) return;
     try {
-      const signatures = await connection.getSignaturesForAddress(referencePubkey, { limit: 1 });
-      if (signatures.length > 0) {
-        cancelled = true;
-        clearInterval(intervalId);
-        clearTimeout(timeoutId);
-        onReceived(signatures[0].signature);
+      const sigs = await connection.getSignaturesForAddress(referencePubkey, { limit: 5 }, 'confirmed');
+      if (sigs.length > 0 && !stopped) {
+        cleanup();
+        onReceived(sigs[0].signature);
       }
-    } catch (e) {
-      console.warn('[Merchant] polling error:', e);
+    } catch {
+      // Network error — keep polling
     }
-  }, pollIntervalMs);
-
-  return () => {
-    cancelled = true;
-    clearInterval(intervalId);
-    clearTimeout(timeoutId);
   };
+
+  // First poll immediately, then on interval
+  poll();
+  intervalId = setInterval(poll, pollIntervalMs);
+
+  return cleanup;
 }
