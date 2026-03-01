@@ -1,20 +1,29 @@
+import { useFonts, JetBrainsMono_400Regular, JetBrainsMono_700Bold } from '@expo-google-fonts/jetbrains-mono';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { WalletProvider } from '../src/context/WalletContext';
+import { colors } from '../src/design/tokens';
 import '../global.css';
 
 export default function RootLayout() {
+  const [fontsLoaded] = useFonts({
+    'JetBrainsMono-Regular': JetBrainsMono_400Regular,
+    'JetBrainsMono-Bold': JetBrainsMono_700Bold,
+  });
+
+  if (!fontsLoaded) return null;
+
   return (
     <SafeAreaProvider>
       <WalletProvider>
         <StatusBar style="light" />
         <Stack
           screenOptions={{
-            headerStyle: { backgroundColor: '#0a0a0a' },
+            headerStyle: { backgroundColor: colors.base },
             headerTintColor: '#FFFFFF',
             headerTitleStyle: { fontWeight: '700' },
-            contentStyle: { backgroundColor: '#0a0a0a' },
+            contentStyle: { backgroundColor: colors.base },
           }}
         >
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
