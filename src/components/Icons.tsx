@@ -159,3 +159,37 @@ export function GhostReceiveIcon({ size = 24, color = '#fff' }: IconProps) {
     </Svg>
   );
 }
+
+// Merchant storefront icon (filled)
+export function MerchantIcon({ size = 24, color = '#fff' }: IconProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path d="M3 10V20a1 1 0 001 1h16a1 1 0 001-1V10" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      <Path d="M1 10l2.68-6.7A1 1 0 014.61 3h14.78a1 1 0 01.93.63L23 10" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      <Path d="M12 21V14h4v7" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      <Path d="M7 14h0" stroke={color} strokeWidth="2" strokeLinecap="round" />
+    </Svg>
+  );
+}
+
+// Merchant storefront icon (outline)
+export function MerchantOutlineIcon({ size = 24, color = '#fff' }: IconProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path d="M3 10V20a1 1 0 001 1h16a1 1 0 001-1V10" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      <Path d="M1 10l2.68-6.7A1 1 0 014.61 3h14.78a1 1 0 01.93.63L23 10" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      <Path d="M12 21V14h4v7" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    </Svg>
+  );
+}
+
+// Checkmark circle icon (for receipt)
+export function CheckCircleIcon({ size = 24, color = '#fff' }: IconProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Circle cx="12" cy="12" r="10" fill={color} opacity={0.15} />
+      <Circle cx="12" cy="12" r="10" stroke={color} strokeWidth="1.5" />
+      <Path d="M8 12.5l2.5 2.5L16 9.5" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    </Svg>
+  );
+}
