@@ -25,3 +25,5 @@ expo-env.d.ts
 .beads/
 logo-reff.png
 logo-erased.png
+scripts/treasury.json
+scripts/*.json

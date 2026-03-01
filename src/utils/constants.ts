@@ -4,7 +4,12 @@ export const RPC_URL = process.env.EXPO_PUBLIC_RPC_URL ?? 'https://api.devnet.so
 
 export const USDC_MINT_DEVNET = '4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU'; // Circle devnet USDC
 export const USDC_MINT_MAINNET = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
-export const SKR_MINT = process.env.EXPO_PUBLIC_SKR_MINT ?? 'SKRjqAFEbFsrqf5nfvGBHFbg1NqSrAcqgNNGvGJJiJm';
+export const SKR_MINT_MAINNET = 'SKRbvo6Gf7GondiT3BbTfuRDPqLWei4j2Qy2NPGZhW3';
+export const SKR_DECIMALS = 6;
+export const SKR_STAKING_PROGRAM = 'SKRskrmtL83pcL4YqLWt6iPefDqwXQWHSw9S9vz94BZ';
+export const SKR_TREASURY = process.env.EXPO_PUBLIC_SKR_TREASURY ?? '';
+
+export const SKR_MINT = process.env.EXPO_PUBLIC_SKR_MINT ?? 'AD4ereCFKqgRCp77sU5q771oeNrrisxaEbqG9Ni9foyS';
 
 export const USDC_MINT = SOLANA_NETWORK === 'mainnet-beta' ? USDC_MINT_MAINNET : USDC_MINT_DEVNET;
 export const USDC_DECIMALS = 6;
