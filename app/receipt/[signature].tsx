@@ -21,6 +21,7 @@ export default function ReceiptScreen() {
     savedGas: string;
     received: string;
     skrBalance: string;
+    cashbackSig: string;
   }>();
 
   const amount = parseFloat(params.amount ?? '0');
@@ -28,8 +29,10 @@ export default function ReceiptScreen() {
   const savedGas = parseFloat(params.savedGas ?? '0');
   const skrBalance = parseFloat(params.skrBalance ?? '0');
   const isReceived = params.received === 'true';
+  const cashbackSig = params.cashbackSig || null;
 
   const skrStatus = getSkrTier(skrBalance);
+  const skrStatusAfter = getSkrTier(skrBalance + cashback);
 
   const scale = useSharedValue(0);
   const opacity = useSharedValue(0);
@@ -106,15 +109,51 @@ export default function ReceiptScreen() {
           )}
 
           {cashback > 0 && (
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                <SkrTierBadge tier={skrStatus.tier} size="sm" />
-                <Text style={{ color: colors.textSub, marginLeft: 8 }}>SKR Cashback</Text>
+            <>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  <SkrTierBadge tier={skrStatus.tier} size="sm" />
+                  <Text style={{ color: colors.textSub, marginLeft: 8 }}>SKR Cashback</Text>
+                </View>
+                <Text style={{ color: colors.green, fontWeight: '700' }}>
+                  +{cashback.toFixed(4)} SKR
+                </Text>
               </View>
-              <Text style={{ color: colors.green, fontWeight: '700' }}>
-                +{cashback.toFixed(4)} SKR
-              </Text>
-            </View>
+              {/* SKR tier progress bar */}
+              {skrStatus.nextTier && (
+                <View style={{ marginBottom: 16 }}>
+                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 }}>
+                    <Text style={{ color: colors.textMute, fontSize: 11 }}>
+                      Progress to {skrStatus.nextTier}
+                    </Text>
+                    <Text style={{ color: colors.textMute, fontSize: 11 }}>
+                      {skrStatus.nextTierRequirement.toFixed(1)} SKR to go
+                    </Text>
+                  </View>
+                  <View style={{ height: 4, backgroundColor: colors.surface2, borderRadius: 2, overflow: 'hidden' }}>
+                    <View style={{
+                      height: '100%', borderRadius: 2, backgroundColor: colors.green,
+                      width: `${Math.min(100, (skrBalance / (skrBalance + skrStatus.nextTierRequirement)) * 100)}%`,
+                    }} />
+                  </View>
+                  {skrStatusAfter.tier !== skrStatus.tier && (
+                    <Text style={{ color: colors.green, fontSize: 12, fontWeight: '700', marginTop: 6, textAlign: 'center' }}>
+                      Tier Up! Welcome to {skrStatusAfter.tier}
+                    </Text>
+                  )}
+                </View>
+              )}
+              {cashbackSig && (
+                <TouchableOpacity
+                  onPress={() => Linking.openURL(explorerUrl(cashbackSig, SOLANA_NETWORK))}
+                  style={{ marginBottom: 16 }}
+                >
+                  <Text style={{ color: colors.purple, fontSize: 12, fontWeight: '600' }}>
+                    View SKR cashback on Solscan ↗
+                  </Text>
+                </TouchableOpacity>
+              )}
+            </>
           )}
 
           {params.signature ? (

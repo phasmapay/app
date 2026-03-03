@@ -26,8 +26,16 @@ export const JUPITER_V6_QUOTE = 'https://quote-api.jup.ag/v6/quote';
 export const JUPITER_V6_SWAP = 'https://quote-api.jup.ag/v6/swap';
 
 export const SKR_TIERS = {
-  GOLD: { minStaked: 10000, cashbackPct: 0.03, label: 'Gold' },
-  SILVER: { minStaked: 1000, cashbackPct: 0.02, label: 'Silver' },
-  BRONZE: { minStaked: 100, cashbackPct: 0.01, label: 'Bronze' },
+  GOLD: { minStaked: 1000, cashbackPct: 0.03, label: 'Gold' },
+  SILVER: { minStaked: 100, cashbackPct: 0.02, label: 'Silver' },
+  BRONZE: { minStaked: 10, cashbackPct: 0.01, label: 'Bronze' },
   BASE: { minStaked: 0, cashbackPct: 0.005, label: 'Ghost' },
+} as const;
+
+// Vault daily limit ceiling per SKR tier
+export const SKR_VAULT_CEILINGS = {
+  Gold: 500,
+  Silver: 100,
+  Bronze: 25,
+  Ghost: 10,
 } as const;

@@ -1,6 +1,6 @@
-import React, { useEffect, useCallback } from 'react';
+import React, { useEffect, useCallback, useState } from 'react';
 import {
-  View, Text, TouchableOpacity, ActivityIndicator, Alert, Image,
+  View, Text, TouchableOpacity, ActivityIndicator, Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
@@ -11,6 +11,8 @@ import { usePayment } from '../src/hooks/usePayment';
 import { useBalances } from '../src/hooks/useBalances';
 import { NfcRipple } from '../src/components/NfcRipple';
 import { GlassCard } from '../src/components/GlassCard';
+import { GuardianSteps, GuardianBadge } from '../src/components/GuardianSteps';
+import { VaultIcon } from '../src/components/Icons';
 import { colors, space, radius } from '../src/design/tokens';
 
 export default function GhostPayScreen() {
@@ -22,6 +24,7 @@ export default function GhostPayScreen() {
     authToken,
     skrStatus.balance,
   );
+  const [showGuardianDetails, setShowGuardianDetails] = useState(false);
 
   useEffect(() => {
     enableForegroundNfc();
@@ -48,6 +51,8 @@ export default function GhostPayScreen() {
           cashback: payState.cashback.toString(),
           savedGas: payState.savedGas.toString(),
           ghostMode: 'true',
+          cashbackSig: payState.cashbackSig ?? '',
+          skrBalance: skrStatus.balance.toString(),
         },
       });
     }
@@ -59,6 +64,7 @@ export default function GhostPayScreen() {
 
   const handleReset = useCallback(() => {
     paymentStarted.current = false;
+    setShowGuardianDetails(false);
     resetNfc();
     resetPay();
   }, [resetNfc, resetPay]);
@@ -83,7 +89,7 @@ export default function GhostPayScreen() {
   }, [payState.status, prepare]);
 
   const isScanning = nfcState.status === 'scanning';
-  const isProcessing = ['optimizing', 'signing', 'confirming'].includes(payState.status);
+  const isProcessing = ['optimizing', 'guarding', 'signing', 'confirming'].includes(payState.status);
   const hasError = nfcState.status === 'error' || payState.status === 'error';
   const errorMessage =
     (nfcState.status === 'error' && nfcState.message) ||
@@ -96,6 +102,7 @@ export default function GhostPayScreen() {
   const getStatusText = () => {
     if (isScanning) return 'Hold near Ghost NFC tag...';
     if (payState.status === 'optimizing') return 'AI optimizing route...';
+    if (payState.status === 'guarding') return 'Guardian scanning recipient...';
     if (payState.status === 'signing') return 'Approve in wallet...';
     if (payState.status === 'confirming') return 'Confirming on Solana...';
     if (hasError) return errorMessage;
@@ -139,6 +146,11 @@ export default function GhostPayScreen() {
         {/* Payment confirmation card */}
         {payState.status === 'awaiting_approval' && (
           <GlassCard glow={colors.ghost} style={{ width: '100%', padding: space.lg, marginTop: space.xl }}>
+            {/* Guardian verdict badge */}
+            <View style={{ marginBottom: space.md }}>
+              <GuardianBadge risk={payState.guardian.risk} summary={payState.guardian.summary} />
+            </View>
+
             <Text style={{ color: colors.textSub, fontSize: 10, textTransform: 'uppercase', letterSpacing: 2, marginBottom: space.md }}>
               Confirm Ghost Payment
             </Text>
@@ -181,19 +193,70 @@ export default function GhostPayScreen() {
                 </Text>
               </View>
             )}
-            <View style={{ flexDirection: 'row', gap: space.md }}>
-              <TouchableOpacity
-                style={{ flex: 1, backgroundColor: colors.surface2, borderRadius: radius.lg, paddingVertical: space.base, alignItems: 'center' }}
-                onPress={handleReset}
-              >
-                <Text style={{ color: colors.textSub, fontWeight: '600' }}>Cancel</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={{ flex: 1, backgroundColor: colors.ghost, borderRadius: radius.lg, paddingVertical: space.base, alignItems: 'center' }}
-                onPress={confirm}
-              >
-                <Text style={{ color: colors.base, fontWeight: '700' }}>Confirm</Text>
-              </TouchableOpacity>
+
+            {/* Guardian details (collapsible) */}
+            <TouchableOpacity
+              onPress={() => setShowGuardianDetails(!showGuardianDetails)}
+              style={{ marginBottom: space.md }}
+            >
+              <Text style={{ color: colors.ghost, fontSize: 12, fontWeight: '600' }}>
+                {showGuardianDetails ? 'Hide analysis ▲' : 'View analysis ▼'}
+              </Text>
+            </TouchableOpacity>
+            {showGuardianDetails && (
+              <View style={{ marginBottom: space.md }}>
+                <GuardianSteps verdict={payState.guardian} animate={false} />
+              </View>
+            )}
+
+            {/* Vault info */}
+            {payState.vaultEligible && (
+              <View style={{
+                flexDirection: 'row', alignItems: 'center',
+                backgroundColor: colors.greenDim, borderRadius: radius.sm,
+                padding: space.sm, marginBottom: space.md,
+              }}>
+                <VaultIcon size={14} color={colors.green} />
+                <Text style={{ color: colors.green, fontSize: 11, marginLeft: 6 }}>
+                  Vault: ${payState.vaultRemaining.toFixed(2)} remaining today
+                </Text>
+              </View>
+            )}
+
+            {/* Action buttons */}
+            <View style={{ gap: space.sm }}>
+              {payState.vaultEligible && (
+                <TouchableOpacity
+                  style={{
+                    backgroundColor: colors.green, borderRadius: radius.lg,
+                    paddingVertical: space.base, alignItems: 'center',
+                    flexDirection: 'row', justifyContent: 'center',
+                  }}
+                  onPress={() => confirm(true)}
+                >
+                  <VaultIcon size={16} color="#000" />
+                  <Text style={{ color: '#000', fontWeight: '700', marginLeft: 8 }}>Ghost Pay from Vault (instant)</Text>
+                </TouchableOpacity>
+              )}
+              <View style={{ flexDirection: 'row', gap: space.md }}>
+                <TouchableOpacity
+                  style={{ flex: 1, backgroundColor: colors.surface2, borderRadius: radius.lg, paddingVertical: space.base, alignItems: 'center' }}
+                  onPress={handleReset}
+                >
+                  <Text style={{ color: colors.textSub, fontWeight: '600' }}>Cancel</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={{
+                    flex: 1, borderRadius: radius.lg, paddingVertical: space.base, alignItems: 'center',
+                    backgroundColor: payState.guardian.risk === 'red' ? colors.warning : colors.ghost,
+                  }}
+                  onPress={() => confirm(false)}
+                >
+                  <Text style={{ color: colors.base, fontWeight: '700' }}>
+                    {payState.guardian.risk === 'red' ? 'Proceed Anyway' : 'Confirm'}
+                  </Text>
+                </TouchableOpacity>
+              </View>
             </View>
           </GlassCard>
         )}
