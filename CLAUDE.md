@@ -62,6 +62,14 @@ Each folder has its own `CLAUDE.md` with detailed context:
 ### Payment Flow States
 `idle → optimizing → guarding → awaiting_approval → signing → confirming → success`
 
+## Yield Architecture
+
+- `src/services/yield.ts` — simulated yield on total idle USDC (vault + unclaimed ghost)
+- `getTotalIdleUsdc()` sums vault balance + all unclaimed ephemeral ATA balances on-chain
+- Demo: 7% APY with 1440x time multiplier (1 min = 1 day)
+- Claim pays real SKR from treasury
+- **Production design**: shared PDA vault → Kamino USDC lending. One protocol account, rent amortized across all users. Per-user Kamino account rent (~$1) is uneconomical for small balances — shared vault solves this. Ghost ephemeral ATAs closed on sweep, rent reclaimed.
+
 ## Key Decisions
 
 - **Icons**: Custom SVG (`react-native-svg`), not Ionicons/expo-font (broke on builds)

@@ -1,8 +1,10 @@
 import { Connection, Keypair, PublicKey } from '@solana/web3.js';
+import { getAssociatedTokenAddressSync, getAccount, TokenAccountNotFoundError } from '@solana/spl-token';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getVaultBalance, getVaultConfig } from './vault';
+import { getUnclaimedPayments } from './ghostPayment';
 import { buildSkrCashbackTx } from './skrStaking';
-import { SKR_MINT, SKR_DECIMALS } from '../utils/constants';
+import { SKR_MINT, SKR_DECIMALS, USDC_MINT, USDC_DECIMALS } from '../utils/constants';
 
 const YIELD_STATE_KEY = 'phasma:yield_state';
 
@@ -49,9 +51,48 @@ async function saveYieldState(state: YieldState): Promise<void> {
  */
 const DEMO_TIME_MULTIPLIER = 1440; // 1 min real = 1 day yield
 
+/**
+ * Sum USDC across vault + unclaimed ghost payments.
+ *
+ * Production architecture: all idle USDC (vault + unclaimed ghost ephemeral
+ * addresses) would be pooled into a single PhasmaPay protocol vault (PDA)
+ * that deposits to Kamino USDC lending. One Kamino account setup amortized
+ * across all users — no per-user protocol account rent. Ghost ephemeral ATAs
+ * are closed on sweep, rent reclaimed.
+ *
+ * For the hackathon demo, we simulate yield on the combined balance.
+ */
+async function getTotalIdleUsdc(connection: Connection): Promise<number> {
+  const [vaultBal, unclaimed] = await Promise.all([
+    getVaultBalance(connection),
+    getUnclaimedPayments(),
+  ]);
+
+  // Sum unclaimed ghost payment balances (check on-chain, non-blocking)
+  let unclaimedTotal = 0;
+  const usdcMint = new PublicKey(USDC_MINT);
+  const checks = unclaimed
+    .filter(p => p.status === 'received' || p.status === 'pending')
+    .map(async (p) => {
+      try {
+        const owner = new PublicKey(p.ephemeralPubkey);
+        const ata = getAssociatedTokenAddressSync(usdcMint, owner);
+        const account = await getAccount(connection, ata);
+        return Number(account.amount) / 10 ** USDC_DECIMALS;
+      } catch (e) {
+        if (e instanceof TokenAccountNotFoundError) return 0;
+        return 0;
+      }
+    });
+  const results = await Promise.all(checks);
+  unclaimedTotal = results.reduce((sum, v) => sum + v, 0);
+
+  return vaultBal + unclaimedTotal;
+}
+
 export async function updateYieldAccrual(connection: Connection): Promise<YieldState> {
   const state = await getYieldState();
-  const currentBalance = await getVaultBalance(connection);
+  const currentBalance = await getTotalIdleUsdc(connection);
 
   const now = Date.now();
   const elapsedMs = now - state.lastSnapshotTime;
@@ -112,10 +153,10 @@ export async function claimYield(
 }
 
 /**
- * Get projected annual yield based on current vault balance.
+ * Get projected annual yield based on total idle USDC (vault + unclaimed).
  */
-export function getProjectedAnnualYield(vaultBalance: number): number {
-  return vaultBalance * MOCK_APY;
+export function getProjectedAnnualYield(totalIdleBalance: number): number {
+  return totalIdleBalance * MOCK_APY;
 }
 
 /**

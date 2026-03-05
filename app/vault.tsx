@@ -251,7 +251,7 @@ export default function VaultScreen() {
         </GlassCard>
 
         {/* Yield accrual */}
-        {yieldState && balance > 0 && (
+        {yieldState && (balance > 0 || yieldState.lastSnapshotBalance > 0) && (
           <GlassCard glow={colors.green} style={{ padding: space.lg, marginBottom: space.lg }}>
             <Text style={{ color: colors.textSub, fontSize: 10, letterSpacing: 2, textTransform: 'uppercase', marginBottom: space.md }}>
               Yield Accrual
@@ -262,7 +262,7 @@ export default function VaultScreen() {
                   +{yieldState.accruedYield.toFixed(4)} SKR
                 </Text>
                 <Text style={{ color: colors.textSub, fontSize: 11, marginTop: 2 }}>
-                  Accrued from idle vault USDC
+                  Accrued from idle USDC (vault + unclaimed)
                 </Text>
               </View>
               <View style={{ alignItems: 'flex-end' }}>
@@ -272,7 +272,7 @@ export default function VaultScreen() {
             </View>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: space.sm }}>
               <Text style={{ color: colors.textSub, fontSize: 12 }}>
-                Annual yield: ~${getProjectedAnnualYield(balance).toFixed(2)}
+                Annual yield: ~${getProjectedAnnualYield(yieldState.lastSnapshotBalance).toFixed(2)}
               </Text>
               <Text style={{ color: colors.textSub, fontSize: 12 }}>
                 Lifetime claimed: {yieldState.totalClaimed.toFixed(2)} SKR

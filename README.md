@@ -46,6 +46,12 @@ Privacy payments via a fresh escrow PDA per transaction. The recipient's real wa
 
 SKR is a real SPL token on devnet: `AD4ereCFKqgRCp77sU5q771oeNrrisxaEbqG9Ni9foyS`
 
+**Yield on Idle USDC**
+
+All idle USDC across vaults and unclaimed ghost payments earns yield. In production, funds pool into a single PDA-controlled protocol vault that deposits to Kamino USDC lending (~5-8% APY). One protocol account setup amortized across all users — no per-user rent overhead. Ghost ephemeral ATAs are closed on sweep, reclaiming rent. Yield funds SKR cashback, making the system self-sustaining without treasury subsidies.
+
+For the hackathon demo: yield is simulated at 7% APY with a time accelerator (1 min = 1 day) so judges see numbers ticking up in real time. Claimed as real SKR tokens from treasury.
+
 **AI Route Optimization**
 Before signing, an agent evaluates direct USDC transfer vs. Jupiter swap and picks the cheaper path automatically.
 

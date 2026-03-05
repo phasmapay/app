@@ -193,7 +193,11 @@ MWA (Mobile Wallet Adapter) requires opening Phantom, showing a popup, user taps
 ## Yield System (POC)
 
 ### What It Does
-Tracks how long USDC sits idle in the vault. Calculates simulated yield at 7% APY. User can "Claim" yield as real SKR tokens sent from treasury.
+Tracks how long USDC sits idle across **vault + unclaimed ghost payments**. Calculates simulated yield at 7% APY. User can "Claim" yield as real SKR tokens sent from treasury.
+
+`getTotalIdleUsdc()` sums:
+- Vault USDC balance (vault ATA)
+- All unclaimed ghost payment balances (ephemeral ATAs with status `pending` or `received`)
 
 ### Demo Accelerator
 `DEMO_TIME_MULTIPLIER = 1440` — 1 real minute = 1 day of yield. So in a 2-minute demo, judges see ~2 days of yield accumulate.
@@ -204,8 +208,36 @@ Tracks how long USDC sits idle in the vault. Calculates simulated yield at 7% AP
 3. Treasury keypair signs → sends on-chain
 4. Resets accrued to 0, increments lifetime claimed
 
-### The Economic Story
-In production: idle vault USDC → Kamino USDC lending vault → ~5-8% APY → yield funds cashback. Self-sustaining, no treasury subsidies. For hackathon: we mock the Kamino part and pay from treasury.
+### The Economic Story — Why PhasmaPay Can Generate Yield
+
+**The problem with naive per-user DeFi integration:**
+On Solana, first interaction with any protocol (Kamino, Marinade, etc.) requires opening protocol-specific accounts. For Kamino lending: kToken ATA (~0.002 SOL) + obligation account (~0.003-0.005 SOL). At $150/SOL, that's ~$1 in rent per user. A vault with $10 USDC at 7% APY earns $0.70/year — **breakeven is 1.4 years**. For ephemeral ghost addresses it's even worse: every single payment would need a full account setup.
+
+**PhasmaPay's solution — Shared Protocol Vault:**
+1. **Single PDA-controlled vault** owned by the PhasmaPay program deposits to Kamino
+2. All user vault USDC + unclaimed ghost payments pool into this one account
+3. **One** Kamino account setup, rent amortized across all users (~$1 total, not per user)
+4. Individual user shares tracked in PhasmaPay's on-chain program state
+5. Ghost ephemeral ATAs are closed on sweep (rent reclaimed ~0.002 SOL each)
+
+**The yield flywheel:**
+```
+User vault USDC ──────────┐
+                           ├──→ PhasmaPay Protocol Vault (PDA)
+Unclaimed ghost payments ──┘         │
+                                     ▼
+                              Kamino USDC Lending
+                              (~5-8% APY real)
+                                     │
+                           ┌─────────┴─────────┐
+                           ▼                   ▼
+                    SKR Cashback          Protocol Revenue
+                    (paid to users)       (sustainability)
+```
+
+This makes PhasmaPay self-sustaining: idle USDC earns yield → yield funds cashback → no treasury subsidies needed. The shared vault architecture solves the rent economics problem that kills individual-user DeFi integration on Solana.
+
+**For hackathon:** We simulate yield on the combined balance and pay from treasury. The architecture is designed and documented for production.
 
 ---
 
