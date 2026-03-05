@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { PublicKey } from '@solana/web3.js';
-import { getConnection, resetConnection } from '../utils/solana';
+import { getConnection, resetConnection, getFallbackConnection } from '../utils/solana';
 import { getUsdcBalance, getSolBalance } from '../services/payment';
 import { getSkrBalance, getSkrTier, SkrStatus } from '../services/skr';
 import { USDC_MINT } from '../utils/constants';
@@ -31,7 +31,7 @@ export function useBalances(walletAddress: string | null): Balances {
     const pubkey = new PublicKey(walletAddress);
     const usdcMint = new PublicKey(USDC_MINT);
     const timeout = new Promise<never>((_, reject) =>
-      setTimeout(() => reject(new Error('Balance fetch timeout')), 8000)
+      setTimeout(() => reject(new Error('Balance fetch timeout')), 15000)
     );
     return Promise.race([
       Promise.all([
@@ -56,10 +56,10 @@ export function useBalances(walletAddress: string | null): Balances {
       setSkrStatus(getSkrTier(skrBal));
     } catch (err) {
       console.error('Balance fetch failed (primary RPC):', err);
-      // Reset stale singleton and retry with a fresh connection
+      // Retry with public devnet RPC as fallback
       resetConnection();
       try {
-        const fallbackConnection = getConnection();
+        const fallbackConnection = getFallbackConnection();
         const [usdcBal, solBal, skrBal] = await fetchBalances(fallbackConnection, walletAddress);
         setUsdc(usdcBal);
         setSol(solBal);

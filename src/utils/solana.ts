@@ -23,12 +23,19 @@ export function resetConnection(): void {
   _connectionUrl = null;
 }
 
+export function getFallbackConnection(): Connection {
+  return new Connection(FALLBACK_RPC_URL, {
+    commitment: 'confirmed',
+    confirmTransactionInitialTimeout: 60000,
+  });
+}
+
 export function getConnectionWithFallback(): Connection {
   try {
     return getConnection();
   } catch {
     resetConnection();
-    return new Connection(FALLBACK_RPC_URL, 'confirmed');
+    return getFallbackConnection();
   }
 }
 
