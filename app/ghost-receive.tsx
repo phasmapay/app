@@ -288,7 +288,7 @@ export default function GhostReceiveScreen() {
                 }}
                 onPress={() => handleClaim()}
               >
-                <Text style={{ color: '#000', fontWeight: '700', fontSize: 17 }}>Claim to Wallet</Text>
+                <Text style={{ color: '#fff', fontWeight: '700', fontSize: 17 }}>Claim to Wallet</Text>
               </TouchableOpacity>
             </View>
           )}
@@ -324,7 +324,7 @@ export default function GhostReceiveScreen() {
                 }}
                 onPress={hook.reset}
               >
-                <Text style={{ color: '#000', fontWeight: '700', fontSize: 16 }}>Try Again</Text>
+                <Text style={{ color: '#fff', fontWeight: '700', fontSize: 16 }}>Try Again</Text>
               </TouchableOpacity>
             </View>
           )}
@@ -341,7 +341,7 @@ export default function GhostReceiveScreen() {
                 onPress={handleStart}
                 disabled={!canStart}
               >
-                <Text style={{ color: canStart ? '#000' : colors.textMute, fontWeight: '700', fontSize: 17 }}>
+                <Text style={{ color: canStart ? '#fff' : colors.textMute, fontWeight: '700', fontSize: 17 }}>
                   Start Ghost Session
                 </Text>
               </TouchableOpacity>

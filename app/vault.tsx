@@ -182,7 +182,7 @@ export default function VaultScreen() {
             }}
             onPress={handleInit}
           >
-            <Text style={{ color: '#000', fontWeight: '700', fontSize: 16 }}>Create Vault</Text>
+            <Text style={{ color: '#fff', fontWeight: '700', fontSize: 16 }}>Create Vault</Text>
           </TouchableOpacity>
           <TouchableOpacity onPress={() => router.back()} style={{ marginTop: space.xl }}>
             <Text style={{ color: colors.textSub }}>Back</Text>
@@ -288,9 +288,9 @@ export default function VaultScreen() {
               disabled={claiming || yieldState.accruedYield < 0.001}
             >
               {claiming ? (
-                <ActivityIndicator color="#000" size="small" />
+                <ActivityIndicator color="#fff" size="small" />
               ) : (
-                <Text style={{ color: yieldState.accruedYield >= 0.001 ? '#000' : colors.textSub, fontWeight: '700' }}>
+                <Text style={{ color: yieldState.accruedYield >= 0.001 ? '#fff' : colors.textSub, fontWeight: '700' }}>
                   {yieldState.accruedYield >= 0.001 ? `Claim ${yieldState.accruedYield.toFixed(4)} SKR` : 'Accruing yield...'}
                 </Text>
               )}

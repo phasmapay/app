@@ -233,8 +233,8 @@ export default function GhostPayScreen() {
                   }}
                   onPress={() => confirm(true)}
                 >
-                  <VaultIcon size={16} color="#000" />
-                  <Text style={{ color: '#000', fontWeight: '700', marginLeft: 8 }}>Ghost Pay from Vault (instant)</Text>
+                  <VaultIcon size={16} color="#fff" />
+                  <Text style={{ color: '#fff', fontWeight: '700', marginLeft: 8 }}>Ghost Pay from Vault (instant)</Text>
                 </TouchableOpacity>
               )}
               <View style={{ flexDirection: 'row', gap: space.md }}>
