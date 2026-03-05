@@ -13,32 +13,20 @@ export function GlassCard({ children, style, glow }: GlassCardProps) {
     <View
       style={[
         {
-          backgroundColor: 'rgba(255,255,255,0.04)',
+          backgroundColor: '#FFFFFF',
           borderRadius: radius.xl,
           borderWidth: 1,
-          borderColor: 'rgba(255,255,255,0.08)',
+          borderColor: 'rgba(0,0,0,0.06)',
+          elevation: 2,
           overflow: 'hidden',
         },
         glow && {
-          shadowColor: glow,
-          shadowOpacity: 0.25,
-          shadowRadius: 20,
-          elevation: 12,
+          borderColor: `${glow}30`,
+          elevation: 4,
         },
         style,
       ]}
     >
-      {/* Top highlight streak for glass physicality */}
-      <View
-        style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
-          height: 1,
-          backgroundColor: 'rgba(255,255,255,0.12)',
-        }}
-      />
       {children}
     </View>
   );

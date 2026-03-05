@@ -51,7 +51,6 @@ export default function GhostPayScreen() {
           cashback: payState.cashback.toString(),
           savedGas: payState.savedGas.toString(),
           ghostMode: 'true',
-          cashbackSig: payState.cashbackSig ?? '',
           skrBalance: skrStatus.balance.toString(),
         },
       });
@@ -82,9 +81,9 @@ export default function GhostPayScreen() {
     if (tapResetTimer.current) clearTimeout(tapResetTimer.current);
     tapResetTimer.current = setTimeout(() => { tapCount.current = 0; }, 800);
 
-    if (tapCount.current >= 3) {
+    if (__DEV__ && tapCount.current >= 3) {
       tapCount.current = 0;
-      prepare(mockNfcRead('7xKXtg2CW87d97TXJSDpbD5jBkheTqA3esVKk3X7DHhP', 1.00));
+      prepare(mockNfcRead('5HhoQzBkQ19W5vNZSK46tmUCtVPJNJDkxA83QdD21itN', 1.00));
     }
   }, [payState.status, prepare]);
 

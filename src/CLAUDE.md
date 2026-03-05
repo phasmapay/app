@@ -32,5 +32,6 @@ src/
 - Icons: SVG components via `react-native-svg` (Ionicons/expo-font was unreliable)
 - Styling: Inline `style` props (NativeWind className had reliability issues)
 - MWA address: try base58 first, fallback base64 decode (Phantom returns base64)
-- RPC: `https://rpc.ankr.com/solana_devnet`
-- SKR_MINT is placeholder — no actual token deployed yet
+- RPC: use `getConnection()` which reads `EXPO_PUBLIC_RPC_URL` env var (Helius devnet)
+- SKR_MINT: `AD4ereCFKqgRCp77sU5q771oeNrrisxaEbqG9Ni9foyS` — real SPL token on devnet (6 decimals)
+- SKR_TREASURY: `9fF2CYX61cQq7AxeDeVJVNMNf2NPrasfLLjuK5VHjNjp` — funded, holds 1M SKR

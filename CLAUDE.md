@@ -42,6 +42,26 @@ Each folder has its own `CLAUDE.md` with detailed context:
 - Defaults to devnet (`https://api.devnet.solana.com`), devnet USDC `4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU`
 - **To register as Blink**: deploy publicly → register at dial.to
 
+## Vault + Guardian (MONOLITH features)
+
+### Tap Vault (`src/services/vault.ts`, `app/vault.tsx`)
+- Dedicated keypair stored in `expo-secure-store`, config in AsyncStorage
+- Daily spending limit (default $25), auto-resets at midnight
+- Vault payments sign locally with keypair — no MWA popup (instant tap-to-pay)
+- Load vault via MWA (main wallet → vault USDC transfer)
+- Works for both normal NFC pay and ghost pay
+- Home screen shows vault card with balance + daily usage bar
+
+### Guardian Agent (`src/services/guardian.ts`, `src/components/GuardianSteps.tsx`)
+- Deterministic risk engine: 5 checks (account exists, tx history, age, known recipient, amount anomaly)
+- Weighted score 0-100 → green (≥70) / yellow (40-70) / red (<40)
+- Auto-approve: green + Gold SKR tier → skip confirmation entirely
+- Step-by-step animated reveal in pay screen, collapsible analysis
+- Red risk: confirm button becomes orange "Proceed Anyway"
+
+### Payment Flow States
+`idle → optimizing → guarding → awaiting_approval → signing → confirming → success`
+
 ## Key Decisions
 
 - **Icons**: Custom SVG (`react-native-svg`), not Ionicons/expo-font (broke on builds)

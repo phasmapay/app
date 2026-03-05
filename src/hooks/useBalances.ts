@@ -30,10 +30,16 @@ export function useBalances(walletAddress: string | null): Balances {
   const fetchBalances = async (connection: ReturnType<typeof getConnection>, walletAddress: string) => {
     const pubkey = new PublicKey(walletAddress);
     const usdcMint = new PublicKey(USDC_MINT);
-    return Promise.all([
-      getUsdcBalance(connection, pubkey, usdcMint),
-      getSolBalance(connection, pubkey),
-      getSkrBalance(connection, pubkey),
+    const timeout = new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error('Balance fetch timeout')), 8000)
+    );
+    return Promise.race([
+      Promise.all([
+        getUsdcBalance(connection, pubkey, usdcMint),
+        getSolBalance(connection, pubkey),
+        getSkrBalance(connection, pubkey),
+      ]),
+      timeout,
     ]);
   };
 

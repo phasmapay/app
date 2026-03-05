@@ -13,10 +13,10 @@ function TabIcon({ focused, label, ActiveIcon, InactiveIcon }: {
   ActiveIcon: React.FC<{ size?: number; color?: string }>;
   InactiveIcon: React.FC<{ size?: number; color?: string }>;
 }) {
-  const color = focused ? colors.purple : '#666';
+  const color = focused ? colors.purple : colors.textMute;
   const Icon = focused ? ActiveIcon : InactiveIcon;
   return (
-    <View style={{ alignItems: 'center', justifyContent: 'center', width: 80, paddingTop: 4 }}>
+    <View style={{ alignItems: 'center', justifyContent: 'center', width: 80, paddingTop: 10 }}>
       <Icon size={24} color={color} />
       <Text numberOfLines={1} style={{ fontSize: 11, marginTop: 3, color, fontWeight: focused ? '600' : '400' }}>
         {label}
@@ -36,7 +36,7 @@ export default function TabLayout() {
           backgroundColor: colors.base,
           borderTopColor: colors.surface2,
           borderTopWidth: 0.5,
-          height: 68,
+          height: 72,
           paddingBottom: 4,
         },
         tabBarShowLabel: false,

@@ -36,18 +36,18 @@ export default function RootLayout() {
     'JetBrainsMono-Bold': JetBrainsMono_700Bold,
   });
 
-  if (!fontsLoaded) return null;
+  // Don't block render on font loading — system fonts work fine
 
   return (
     <SafeAreaProvider>
       <WalletProvider>
         <ModeProvider>
-          <StatusBar style="light" />
+          <StatusBar style="dark" />
           <MerchantBanner />
           <Stack
             screenOptions={{
               headerStyle: { backgroundColor: colors.base },
-              headerTintColor: '#FFFFFF',
+              headerTintColor: colors.text,
               headerTitleStyle: { fontWeight: '700' },
               contentStyle: { backgroundColor: colors.base },
             }}
@@ -58,6 +58,8 @@ export default function RootLayout() {
             <Stack.Screen name="receipt/[signature]" options={{ title: 'Receipt', presentation: 'modal' }} />
             <Stack.Screen name="ghost-pay" options={{ title: 'Ghost Pay', presentation: 'modal' }} />
             <Stack.Screen name="ghost-receive" options={{ title: 'Ghost Receive', presentation: 'modal' }} />
+            <Stack.Screen name="vault" options={{ title: 'Tap Vault', presentation: 'modal' }} />
+            <Stack.Screen name="claimable" options={{ title: 'Claimable', presentation: 'modal' }} />
           </Stack>
         </ModeProvider>
       </WalletProvider>

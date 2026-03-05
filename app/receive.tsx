@@ -15,6 +15,7 @@ import { getUsdcBalance } from '../src/services/payment';
 import { saveTransaction } from '../src/services/storage';
 import { getConnection } from '../src/utils/solana';
 import { USDC_MINT } from '../src/utils/constants';
+import { colors, space, radius } from '../src/design/tokens';
 
 export default function ReceiveScreen() {
   const { publicKey } = useWallet();
@@ -22,7 +23,6 @@ export default function ReceiveScreen() {
   const [amount, setAmount] = useState('');
   const [isFocused, setIsFocused] = useState(false);
 
-  // Claim exclusive NFC foreground dispatch to suppress system app chooser
   useEffect(() => {
     enableForegroundNfc();
     return () => { disableForegroundNfc(); };
@@ -31,7 +31,7 @@ export default function ReceiveScreen() {
   const [receivedAmount, setReceivedAmount] = useState<number | null>(null);
   const baseBalanceRef = useRef<number | null>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const isReady = state.status === 'emulating'; // waiting for payment via HCE
+  const isReady = state.status === 'emulating';
   const canStart = !!publicKey && parseFloat(amount) > 0;
 
   const pulseScale = useSharedValue(1);
@@ -39,13 +39,11 @@ export default function ReceiveScreen() {
     transform: [{ scale: pulseScale.value }],
   }));
 
-  // Start polling when tag is written; stop on unmount or reset
   useEffect(() => {
     if (isReady && publicKey && receivedAmount === null) {
       const connection = getConnection();
       const mint = new PublicKey(USDC_MINT);
 
-      // Snapshot baseline balance before polling
       getUsdcBalance(connection, publicKey, mint).then((bal) => {
         baseBalanceRef.current = bal;
       });
@@ -60,7 +58,6 @@ export default function ReceiveScreen() {
           reset();
           const received = current - base;
 
-          // Fetch the latest tx signature for this account
           let txSig = '';
           let sender = '';
           try {
@@ -131,28 +128,35 @@ export default function ReceiveScreen() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-[#0a0a0a]">
+    <SafeAreaView style={{ flex: 1, backgroundColor: colors.base }}>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        className="flex-1"
+        style={{ flex: 1 }}
       >
-        <View className="flex-1 px-5 pt-6">
-          <Text className="text-white text-3xl font-bold mb-2">Receive</Text>
-          <Text className="text-[#888] text-sm mb-8">
+        <View style={{ flex: 1, paddingHorizontal: 20, paddingTop: 24 }}>
+          <Text style={{ color: colors.text, fontSize: 28, fontWeight: '700', marginBottom: 4 }}>Receive</Text>
+          <Text style={{ color: colors.textSub, fontSize: 14, marginBottom: 24 }}>
             Enter amount and tap phones to receive payment
           </Text>
 
-          <View className="rounded-2xl p-5 mb-6" style={{ backgroundColor: '#0d0d0d', borderWidth: 1, borderColor: isFocused ? '#9945FF' : '#1f1f1f' }}>
-            <Text className="text-[#888] text-xs uppercase tracking-widest mb-3">Amount (USDC)</Text>
-            <View className="flex-row items-center">
-              <Text className="text-[#9945FF] text-3xl font-bold mr-2">$</Text>
+          <View style={{
+            borderRadius: 16, padding: 20, marginBottom: 20,
+            backgroundColor: colors.surface0,
+            borderWidth: 1, borderColor: isFocused ? colors.purple : colors.border,
+            elevation: 1,
+          }}>
+            <Text style={{ color: colors.textSub, fontSize: 11, textTransform: 'uppercase', letterSpacing: 1.2, marginBottom: 12 }}>
+              Amount (USDC)
+            </Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <Text style={{ color: colors.purple, fontSize: 30, fontWeight: '700', marginRight: 8 }}>$</Text>
               <TextInput
-                className="flex-1 text-white text-3xl font-bold"
+                style={{ flex: 1, color: colors.text, fontSize: 30, fontWeight: '700' }}
                 value={amount}
                 onChangeText={setAmount}
                 keyboardType="decimal-pad"
                 placeholder="0.00"
-                placeholderTextColor="#333"
+                placeholderTextColor={colors.textMute}
                 editable={!isReady}
                 onFocus={() => setIsFocused(true)}
                 onBlur={() => setIsFocused(false)}
@@ -161,30 +165,34 @@ export default function ReceiveScreen() {
           </View>
 
           {publicKey && parseFloat(amount) > 0 && !isReady && (
-            <View className="bg-[#141414] rounded-2xl p-4 mb-4 border border-[#1f1f1f]">
-              <Text className="text-[#888] text-xs uppercase tracking-widest mb-2">Payment URL</Text>
-              <Text className="text-[#555] text-xs" numberOfLines={2} selectable>
+            <View style={{
+              backgroundColor: colors.surface1, borderRadius: 16, padding: 16, marginBottom: 16,
+              borderWidth: 1, borderColor: colors.border,
+            }}>
+              <Text style={{ color: colors.textSub, fontSize: 11, textTransform: 'uppercase', letterSpacing: 1.2, marginBottom: 8 }}>
+                Payment URL
+              </Text>
+              <Text style={{ color: colors.textMute, fontSize: 12 }} numberOfLines={2} selectable>
                 {buildSolanaPayUrl(publicKey.toBase58(), parseFloat(amount)).url}
               </Text>
             </View>
           )}
 
-          <View className="items-center my-8">
+          <View style={{ alignItems: 'center', marginVertical: 28 }}>
             <Animated.View style={pulseStyle}>
               <View
-                className="w-40 h-40 rounded-full items-center justify-center border-2"
                 style={{
-                  borderColor: isReady ? '#14F195' : '#9945FF',
-                  backgroundColor: isReady ? 'rgba(20,241,149,0.1)' : 'rgba(153,69,255,0.1)',
+                  width: 160, height: 160, borderRadius: 80,
+                  alignItems: 'center', justifyContent: 'center',
+                  borderWidth: 2,
+                  borderColor: isReady ? colors.green : colors.purple,
+                  backgroundColor: isReady ? colors.greenDim : colors.purpleDim,
                 }}
               >
-                <Text style={{ fontSize: 20, color: isReady ? '#14F195' : '#9945FF', fontWeight: '700' }}>
+                <Text style={{ fontSize: 20, color: isReady ? colors.green : colors.purple, fontWeight: '700' }}>
                   {isReady ? 'TAP' : 'NFC'}
                 </Text>
-                <Text
-                  className="text-sm font-semibold mt-2"
-                  style={{ color: isReady ? '#14F195' : '#9945FF' }}
-                >
+                <Text style={{ fontSize: 14, fontWeight: '600', marginTop: 8, color: isReady ? colors.green : colors.purple }}>
                   {isReady ? 'Ready' : 'Idle'}
                 </Text>
               </View>
@@ -192,33 +200,38 @@ export default function ReceiveScreen() {
           </View>
 
           {receivedAmount !== null ? (
-            <View style={{ backgroundColor: '#141414', borderRadius: 24, padding: 20, borderWidth: 1, borderColor: '#14F195', alignItems: 'center' }}>
+            <View style={{
+              backgroundColor: colors.surface0, borderRadius: 24, padding: 20,
+              borderWidth: 1, borderColor: colors.green, alignItems: 'center', elevation: 2,
+            }}>
               <Text style={{ fontSize: 40, marginBottom: 8 }}>✅</Text>
-              <Text style={{ color: '#14F195', fontSize: 22, fontWeight: '700', marginBottom: 4 }}>
+              <Text style={{ color: colors.green, fontSize: 22, fontWeight: '700', marginBottom: 4 }}>
                 Payment Received!
               </Text>
-              <Text style={{ color: '#fff', fontSize: 32, fontWeight: '700', marginBottom: 20 }}>
+              <Text style={{ color: colors.text, fontSize: 32, fontWeight: '700', marginBottom: 20 }}>
                 ${receivedAmount.toFixed(2)} USDC
               </Text>
               <TouchableOpacity
-                style={{ backgroundColor: '#1f1f1f', borderRadius: 14, paddingVertical: 14, paddingHorizontal: 40 }}
+                style={{ backgroundColor: colors.surface2, borderRadius: 14, paddingVertical: 14, paddingHorizontal: 40 }}
                 onPress={handleStop}
               >
-                <Text style={{ color: '#888', fontWeight: '600' }}>New Payment</Text>
+                <Text style={{ color: colors.textSub, fontWeight: '600' }}>New Payment</Text>
               </TouchableOpacity>
             </View>
           ) : isReady ? (
-            <View className="items-center">
-              <Text className="text-[#14F195] text-base font-semibold mb-2">
+            <View style={{ alignItems: 'center' }}>
+              <Text style={{ color: colors.green, fontSize: 16, fontWeight: '600', marginBottom: 8 }}>
                 Tap customer's phone to receive ${parseFloat(amount).toFixed(2)}
               </Text>
-              <Text className="text-[#555] text-xs mb-6">
+              <Text style={{ color: colors.textMute, fontSize: 12, marginBottom: 24 }}>
                 Hold phones back-to-back
               </Text>
               {publicKey && amount && (
                 <TouchableOpacity
-                  className="rounded-2xl py-4 px-8 items-center mb-4"
-                  style={{ backgroundColor: '#141414', borderWidth: 1, borderColor: '#9945FF' }}
+                  style={{
+                    borderRadius: 16, paddingVertical: 16, paddingHorizontal: 32, alignItems: 'center',
+                    backgroundColor: colors.surface0, borderWidth: 1, borderColor: colors.purple, elevation: 1,
+                  }}
                   onPress={() => {
                     const { url } = buildSolanaPayUrl(publicKey.toBase58(), parseFloat(amount));
                     Share.share({
@@ -227,40 +240,36 @@ export default function ReceiveScreen() {
                     });
                   }}
                 >
-                  <Text className="text-[#9945FF] font-semibold">Share Payment Link</Text>
+                  <Text style={{ color: colors.purple, fontWeight: '600' }}>Share Payment Link</Text>
                 </TouchableOpacity>
               )}
             </View>
           ) : null}
 
           {state.status === 'error' && (
-            <Text className="text-red-500 text-center mt-4">{state.message}</Text>
+            <Text style={{ color: colors.error, textAlign: 'center', marginTop: 16 }}>{state.message}</Text>
           )}
 
-          {/* Bottom button — standardized position */}
           {receivedAmount === null && (
             <View style={{ position: 'absolute', bottom: 90, left: 20, right: 20 }}>
               {isReady ? (
                 <TouchableOpacity
-                  style={{ backgroundColor: '#1f1f1f', borderRadius: 18, paddingVertical: 20, alignItems: 'center' }}
+                  style={{ backgroundColor: colors.surface2, borderRadius: 18, paddingVertical: 20, alignItems: 'center' }}
                   onPress={handleStop}
                 >
-                  <Text style={{ color: '#888', fontWeight: '700', fontSize: 17 }}>Stop</Text>
+                  <Text style={{ color: colors.textSub, fontWeight: '700', fontSize: 17 }}>Stop</Text>
                 </TouchableOpacity>
               ) : (
                 <TouchableOpacity
                   style={{
-                    backgroundColor: canStart ? '#9945FF' : '#1f1f1f',
+                    backgroundColor: canStart ? colors.green : colors.surface2,
                     borderRadius: 18, paddingVertical: 20, alignItems: 'center',
-                    shadowColor: canStart ? '#9945FF' : 'transparent',
-                    shadowOpacity: 0.5, shadowRadius: 16,
-                    shadowOffset: { width: 0, height: 0 },
-                    elevation: canStart ? 10 : 0,
+                    elevation: canStart ? 8 : 0,
                   }}
                   onPress={handleWriteTag}
                   disabled={!canStart}
                 >
-                  <Text style={{ color: canStart ? '#fff' : '#444', fontWeight: '700', fontSize: 17 }}>
+                  <Text style={{ color: canStart ? '#fff' : colors.textMute, fontWeight: '700', fontSize: 17 }}>
                     Ready to Receive
                   </Text>
                 </TouchableOpacity>

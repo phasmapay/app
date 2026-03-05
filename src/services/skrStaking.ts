@@ -78,8 +78,7 @@ export async function distributeCashback(
 
     tx.sign(treasuryKeypair);
     const signature = await connection.sendRawTransaction(tx.serialize());
-    await connection.confirmTransaction(signature, 'confirmed');
-    console.log('[SKR] Cashback distributed:', signature, 'amount:', cashbackAmount);
+    console.log('[SKR] Cashback sent:', signature, 'amount:', cashbackAmount);
     return signature;
   } catch (e) {
     console.warn('[SKR] Cashback distribution failed:', e);

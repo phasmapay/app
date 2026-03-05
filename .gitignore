@@ -27,6 +27,9 @@ expo-env.d.ts
 .beads/
 logo-reff.png
 logo-erased.png
+treasury.json
 scripts/treasury.json
 scripts/*.json
 app-debug.apk
+target/
+.serena/

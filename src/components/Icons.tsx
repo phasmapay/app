@@ -1,5 +1,5 @@
 import React from 'react';
-import Svg, { Path, Circle, Ellipse } from 'react-native-svg';
+import Svg, { Path, Circle, Ellipse, G, Defs, ClipPath, Rect } from 'react-native-svg';
 
 type IconProps = { size?: number; color?: string };
 
@@ -179,6 +179,75 @@ export function MerchantOutlineIcon({ size = 24, color = '#fff' }: IconProps) {
       <Path d="M3 10V20a1 1 0 001 1h16a1 1 0 001-1V10" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
       <Path d="M1 10l2.68-6.7A1 1 0 014.61 3h14.78a1 1 0 01.93.63L23 10" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
       <Path d="M12 21V14h4v7" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    </Svg>
+  );
+}
+
+// Vault icon — shield with lock
+export function VaultIcon({ size = 24, color = '#fff' }: IconProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path d="M12 2L4 5v6.09c0 5.05 3.41 9.76 8 10.91 4.59-1.15 8-5.86 8-10.91V5l-8-3z" fill={color} opacity={0.15} />
+      <Path d="M12 2L4 5v6.09c0 5.05 3.41 9.76 8 10.91 4.59-1.15 8-5.86 8-10.91V5l-8-3z" stroke={color} strokeWidth="1.5" strokeLinejoin="round" />
+      <Path d="M12 10v4M10 12h4" stroke={color} strokeWidth="2" strokeLinecap="round" />
+    </Svg>
+  );
+}
+
+// Guardian icon — eye with shield
+export function GuardianIcon({ size = 24, color = '#fff' }: IconProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5z" stroke={color} strokeWidth="1.5" strokeLinejoin="round" fill="none" />
+      <Circle cx="12" cy="12" r="3.5" stroke={color} strokeWidth="1.5" fill={color} opacity={0.2} />
+      <Circle cx="12" cy="12" r="1.5" fill={color} />
+    </Svg>
+  );
+}
+
+// USDC token logo — official Circle USD Coin mark
+export function UsdcIcon({ size = 24 }: { size?: number }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 32 32" fill="none">
+      <Circle cx="16" cy="16" r="16" fill="#2775CA" />
+      <Path d="M20.6 18.2c0-2.1-1.3-2.8-3.8-3.1-1.8-.3-2.1-.7-2.1-1.5s.7-1.3 1.8-1.3c1 0 1.6.4 1.9 1.2.1.1.2.2.3.2h.7c.2 0 .3-.1.3-.3v-.1c-.3-1.1-1.1-1.9-2.3-2.1v-1.3c0-.2-.1-.3-.3-.3h-.7c-.2 0-.3.1-.3.3V11c-1.6.2-2.6 1.3-2.6 2.6 0 2 1.2 2.7 3.7 3 1.7.3 2.2.7 2.2 1.6 0 .9-.8 1.6-1.9 1.6-1.5 0-2-.6-2.2-1.4-.1-.2-.2-.2-.3-.2h-.8c-.2 0-.3.1-.3.3v.1c.3 1.2 1.1 2.1 2.7 2.4v1.3c0 .2.1.3.3.3h.7c.2 0 .3-.1.3-.3v-1.3c1.6-.3 2.7-1.3 2.7-2.7z" fill="white" />
+      <Path d="M13.1 24.5c-4.4-1.6-6.7-6.4-5.2-10.8.8-2.2 2.5-3.9 4.7-4.7.2-.1.3-.2.3-.4v-.6c0-.2-.1-.3-.3-.3h-.1c-5.2 1.7-8 7.2-6.3 12.3 1 3.1 3.4 5.5 6.4 6.5.2.1.4 0 .4-.2v-.6c.1-.3 0-.4-.2-.5l.3-.7zm6.1-18.8c-.2-.1-.4 0-.4.2v.6c0 .2.1.4.3.5 4.4 1.6 6.7 6.4 5.2 10.8-.8 2.2-2.5 3.9-4.7 4.7-.2.1-.3.2-.3.4v.6c0 .2.1.3.3.3h.1c5.2-1.7 8-7.2 6.3-12.3-1.1-3.1-3.5-5.5-6.5-6.5l-.3.7z" fill="white" />
+    </Svg>
+  );
+}
+
+// SKR token logo — Solana Seeker diamond with S
+export function SkrIcon({ size = 24 }: { size?: number }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 32 32" fill="none">
+      <Circle cx="16" cy="16" r="16" fill="#8B5CF6" />
+      <Path d="M9 13l7-7 7 7-7 13-7-13z" fill="white" opacity={0.2} />
+      <Path d="M9 13l7-7 7 7-7 13-7-13z" stroke="white" strokeWidth="1.5" strokeLinejoin="round" fill="none" />
+      <Path d="M12.5 14.5c0-.9.7-1.4 1.8-1.6l.3-.1c.8-.1 1-.4 1-.8s-.4-.7-1-.7-.9.2-1.1.7l-.8-.4c.3-.7 1-1.2 1.9-1.2 1.1 0 1.9.6 1.9 1.5 0 .9-.6 1.3-1.7 1.5l-.4.1c-.8.1-1.1.4-1.1.9 0 .5.4.8 1 .8s1-.3 1.2-.8l.8.4c-.3.7-1 1.2-2 1.2-1.1 0-1.8-.7-1.8-1.5z" fill="white" />
+    </Svg>
+  );
+}
+
+// Eye icon — open eye (balance visible)
+export function EyeIcon({ size = 24, color = '#fff' }: IconProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"
+        stroke={color} strokeWidth="1.8" fill="none" />
+      <Circle cx="12" cy="12" r="3" stroke={color} strokeWidth="1.8" fill="none" />
+    </Svg>
+  );
+}
+
+// Eye off icon — crossed-out eye (balance hidden)
+export function EyeOffIcon({ size = 24, color = '#fff' }: IconProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94"
+        stroke={color} strokeWidth="1.8" strokeLinecap="round" fill="none" />
+      <Path d="M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19"
+        stroke={color} strokeWidth="1.8" strokeLinecap="round" fill="none" />
+      <Path d="M1 1l22 22" stroke={color} strokeWidth="1.8" strokeLinecap="round" />
     </Svg>
   );
 }

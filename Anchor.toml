@@ -1,0 +1,22 @@
+[toolchain]
+package_manager = "yarn"
+
+[features]
+resolution = true
+skip-lint = false
+
+[programs.localnet]
+phasma_escrow = "AGXRYordHf4s632jNueAbfFXpt6jb3oGeQ6ispnbzxxY"
+
+[programs.devnet]
+phasma_escrow = "AGXRYordHf4s632jNueAbfFXpt6jb3oGeQ6ispnbzxxY"
+
+[registry]
+url = "https://api.apr.dev"
+
+[provider]
+cluster = "localnet"
+wallet = "~/.config/solana/id.json"
+
+[scripts]
+test = "yarn run ts-mocha -p ./tsconfig.anchor.json -t 1000000 \"tests/**/*.ts\""

@@ -1,6 +1,8 @@
 # PhasmaPay
 
-NFC tap-to-pay for USDC on Solana with ghost addresses — ephemeral keypairs that keep the merchant's real wallet off-chain.
+NFC tap-to-pay for USDC on Solana Seeker. Tap a phone or NFC tag to pay — AI-analyzed risk, instant vault signing, optional privacy via on-chain escrow.
+
+Built for **MONOLITH** (Solana Mobile) — Top 10 + Best SKR.
 
 ## Download
 
@@ -8,37 +10,111 @@ NFC tap-to-pay for USDC on Solana with ghost addresses — ephemeral keypairs th
 - **Demo Video:** [Google Drive](https://drive.google.com/drive/folders/174K8g1-jy9XzaOkPZpDC1APJYDif9bwP?usp=sharing)
 - **Source:** [GitHub](https://github.com/phasmapay/app)
 
-## The Problem
+## What It Does
 
-Open any block explorer and search a merchant's crypto wallet. You can see every payment they ever received — amounts, senders, timestamps. Every crypto payment today is a privacy leak for the receiver. PhasmaPay fixes this with ghost addresses.
+PhasmaPay turns a Solana Seeker into a payment terminal. Tap, review AI risk analysis, confirm — USDC moves. No QR codes. No copy-paste. No wallet popup if you use the vault.
 
-## How It Works
+### Core Features
 
-PhasmaPay supports two payment modes:
+**NFC Tap-to-Pay**
+Read a tag, phone-to-phone tap, or write your address to any NFC tag. `react-native-nfc-manager` handles both read and Host Card Emulation (HCE) for phone-to-phone mode.
 
-### Standard Mode — NFC Tag
+**AI-Powered Guardian**
+Every payment runs through a 5-check risk engine before you confirm:
+1. Account exists on-chain
+2. Transaction history (has the recipient ever transacted?)
+3. Account age
+4. Known recipient (in your history)
+5. Amount anomaly (vs. your baseline)
 
-Solana Pay URI written to a physical NFC tag for fixed-location payments. Customer taps their phone on the tag, wallet signs via Mobile Wallet Adapter (MWA), and USDC is transferred directly. Simple, fast, no privacy layer — ideal for storefronts with a fixed payment address.
+Results are sent to an LLM-powered API, which returns a plain-English risk summary in under 4 seconds. Falls back to a static summary if the API times out. Green (≥70) / Yellow (40–70) / Red (<40) scoring. Gold SKR tier + green score = auto-approve, no confirmation needed.
 
-### Ghost Mode — Ephemeral Address Isolation
+**Tap Vault**
+Dedicated keypair stored in `expo-secure-store`. Pre-load USDC from your main wallet once. Payments sign locally — no MWA popup, sub-second confirmation. Daily spending limits reset at midnight and scale with your SKR tier.
 
-The core contribution. Each payment generates a fresh ephemeral keypair so the merchant's real wallet never appears on-chain:
+**Ghost Mode**
+Privacy payments via a fresh escrow PDA per transaction. The recipient's real wallet never appears in the sender's transaction history. Recipient claims via any Blink-compatible wallet (dial.to, Phantom, Backpack).
 
-1. Merchant enters an amount and generates a one-time keypair
-2. The ghost address is shared via NFC — phone-to-phone using Host Card Emulation (HCE), or written to a physical tag
-3. Customer sends USDC to the ghost address (signed via MWA)
-4. Merchant's app detects the payment, sweeps funds to their real wallet, closes the ephemeral account (reclaiming rent), and destroys the key
+**SKR Token — Tier System**
 
-The payer's on-chain transaction only shows the ephemeral address as recipient. No address reuse, no linkability. The merchant's actual address never appears in any customer transaction.
+| Tier | SKR Balance | Cashback | Vault Limit | Guardian |
+|------|-------------|----------|-------------|----------|
+| Ghost | 0 | 0.5% | $10/day | Manual approve |
+| Bronze | 10+ | 1% | $25/day | Manual approve |
+| Silver | 100+ | 2% | $100/day | Manual approve |
+| Gold | 1000+ | 3% | $500/day | Auto-approve (green risk) |
 
-**Why this matters:** Ghost mode provides address isolation per payment. Future versions will integrate [Light Protocol](https://www.lightprotocol.com/) for fully shielded transfers where amounts and recipients are hidden on-chain too.
+SKR is a real SPL token on devnet: `AD4ereCFKqgRCp77sU5q771oeNrrisxaEbqG9Ni9foyS`
 
-## Additional Features
+**AI Route Optimization**
+Before signing, an agent evaluates direct USDC transfer vs. Jupiter swap and picks the cheaper path automatically.
 
-- **Jupiter v6 route optimization** — Customer holds SOL but needs to pay USDC? The swap and payment are wrapped into one transaction automatically.
-- **SKR tiered cashback** — Ghost (0.5%), Bronze (1%), Silver (2%), Gold (3%) cashback tiers based on SKR token balance. Rewards payment volume.
-- **Solana Actions / Blinks** — Payment requests exposed as a REST endpoint, shareable as Blinks. Same payment infrastructure, two distribution channels.
-- **Torque SDK** — Tracks payment activity for loyalty campaign integration.
+**Solana Actions / Blinks**
+Full Actions spec v2.1.3. Escrow recipients can claim from any Blink-compatible client — no PhasmaPay install required on the receiving end.
+
+**Torque SDK**
+Every completed payment is tracked via Torque for loyalty campaign eligibility.
+
+## Payment Flow
+
+```
+idle → optimizing → guarding → awaiting_approval → signing → confirming → success
+```
+
+Guardian runs during `guarding`. The AI summary is visible before you hit confirm. Red risk turns the confirm button orange ("Proceed Anyway").
+
+## Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                        PhasmaPay App                            │
+│  (Expo bare workflow / React Native / Android)                  │
+│                                                                 │
+│  ┌──────────┐  ┌───────────┐  ┌──────────┐  ┌──────────────┐  │
+│  │ NFC/HCE  │  │ Tap Vault │  │ Guardian │  │ SKR/Cashback │  │
+│  │ Manager  │  │ (local KP)│  │ (AI Risk)│  │ (tiers)      │  │
+│  └────┬─────┘  └─────┬─────┘  └────┬─────┘  └──────┬───────┘  │
+│       │              │              │               │           │
+│  ┌────┴──────────────┴──────────────┴───────────────┴────────┐  │
+│  │          Escrow Service + Payment Service                 │  │
+│  │  buildCreateEscrowTx / buildClaimEscrowTx / USDC transfer │  │
+│  └──────────────────────────┬────────────────────────────────┘  │
+│                             │ MWA (Phantom) or local vault sign │
+└─────────────────────────────┼───────────────────────────────────┘
+                              │
+                    ┌─────────▼──────────┐
+                    │   Solana Devnet    │
+                    │  (Helius RPC)      │
+                    │                   │
+                    │  phasma_escrow     │ ← Anchor 0.31
+                    │  AGXRYord...       │
+                    │                   │
+                    │  SKR SPL Token     │
+                    │  AD4ereCF...       │
+                    └────────┬──────────┘
+                             │
+                    ┌────────▼───────────┐
+                    │  Solana Actions    │ ← api/server.ts
+                    │  /api/actions/pay  │
+                    └────────────────────┘
+                             │
+                    Any Blink client (dial.to, wallets)
+```
+
+## On-Chain Program
+
+**`phasma_escrow`** — Anchor 0.31 program deployed on devnet.
+
+| Instruction | What It Does |
+|---|---|
+| `create_escrow(amount, expiry)` | Sender deposits USDC into PDA vault, sets recipient + expiry |
+| `claim_escrow()` | Recipient proves ownership, sweeps USDC from vault |
+| `refund_escrow()` | Permissionless crank after expiry, returns USDC to sender |
+
+**Program ID:** `AGXRYordHf4s632jNueAbfFXpt6jb3oGeQ6ispnbzxxY`
+
+**Escrow PDA:** `seeds = ["escrow", sender, recipient, expiry_bytes]`
+**Vault PDA:** `seeds = ["vault", escrow_pda]`
 
 ## Quick Start
 
@@ -46,7 +122,8 @@ The payer's on-chain transaction only shows the ephemeral address as recipient. 
 
 - Node.js 18+
 - Android Studio SDK tools
-- Android device with NFC and an MWA-compatible wallet (Phantom, Solflare, etc.)
+- Android device with NFC and Phantom wallet installed
+- Rust + Anchor CLI 0.31 (program development only)
 
 ### Install & Run
 
@@ -54,11 +131,26 @@ The payer's on-chain transaction only shows the ephemeral address as recipient. 
 git clone https://github.com/phasmapay/app.git
 cd app
 npm install
-cp .env.example .env    # defaults work for devnet
+cp .env.example .env    # set EXPO_PUBLIC_RPC_URL to your Helius devnet endpoint
 npx expo run:android    # builds & installs on connected device
 ```
 
-> First build takes ~5 min (Gradle). Subsequent runs use cache.
+First build takes ~5 min (Gradle). Subsequent runs use cache.
+
+### Build the Anchor Program
+
+```bash
+anchor build --no-idl
+anchor test
+```
+
+### Deploy to Devnet
+
+```bash
+solana config set --url devnet
+solana airdrop 5
+anchor deploy --provider.cluster devnet
+```
 
 ### Get Devnet Funds
 
@@ -67,69 +159,63 @@ npx expo run:android    # builds & installs on connected device
 
 ## Testing Ghost Mode (Two Devices)
 
-Ghost mode requires two Android phones with NFC:
-
-1. **Phone A (Merchant):** Ghost Receive → enter $1.00 → "Start Ghost Session"
+1. **Phone A (Merchant):** Ghost Receive → enter amount → "Start Ghost Session"
 2. **Phone B (Customer):** Ghost Pay → "Scan Ghost Tag" → hold phones back-to-back
-3. **Phone B:** Approve in wallet
+3. **Phone B:** Review AI Guardian summary → approve
 4. **Phone A:** "Payment Received" → "Claim to Wallet" → approve in wallet
 
-Both phones need an MWA wallet installed and funded with devnet SOL + USDC.
-
-## Environment Variables
-
-Copy `.env.example` to `.env`. Defaults work out of the box for devnet:
-
-| Variable | Description |
-|---|---|
-| `EXPO_PUBLIC_SOLANA_NETWORK` | `devnet` or `mainnet-beta` |
-| `EXPO_PUBLIC_RPC_URL` | Solana RPC endpoint |
+Both phones need Phantom installed with devnet SOL and USDC.
 
 ## Project Structure
 
 ```
-app/                    # Expo Router screens
-├── pay.tsx             # Standard NFC pay
-├── receive.tsx         # Standard NFC receive
-├── ghost-pay.tsx       # Ghost mode pay (customer)
-├── ghost-receive.tsx   # Ghost mode receive (merchant)
-└── receipt/            # Shared receipt screen
+programs/
+  phasma-escrow/
+    src/lib.rs              # On-chain escrow program (Anchor)
+
+app/                        # Expo Router screens
+├── (tabs)/
+│   ├── index.tsx           # Home — wallet, vault balance, tier
+│   ├── settings.tsx        # SKR tier dashboard, vault management
+│   └── _layout.tsx
+├── pay.tsx                 # Standard NFC pay
+├── receive.tsx             # Standard NFC receive
+├── ghost-receive.tsx       # Ghost mode receive (escrow claim)
+└── vault.tsx               # Vault load/management
 
 src/
 ├── services/
-│   ├── payment.ts      # USDC transfer + MWA signing
-│   ├── ghostPayment.ts # Ephemeral keypair, sweep tx, ATA close
-│   ├── nfc.ts          # NFC read/write helpers
-│   ├── hce.ts          # Host Card Emulation (phone-to-phone NFC)
-│   ├── jupiter.ts      # Jupiter v6 route optimization
-│   ├── torque.ts       # Torque SDK loyalty tracking
-│   └── skr.ts          # SKR balance & tier calc
-├── hooks/              # usePayment, useNfc, useBalances, useGhostReceive
-├── context/            # WalletContext (MWA connection state)
-└── utils/              # Constants, Solana connection
+│   ├── escrow.ts           # On-chain escrow instruction builders
+│   ├── payment.ts          # USDC transfer + MWA signing
+│   ├── vault.ts            # Local vault keypair + daily limits
+│   ├── guardian.ts         # Risk engine + LLM-powered summary
+│   ├── nfc.ts              # NFC read/write helpers
+│   ├── hce.ts              # Host Card Emulation (phone-to-phone)
+│   ├── jupiter.ts          # Jupiter v6 route optimization
+│   ├── skr.ts              # SKR balance, tier calc, cashback
+│   └── torque.ts           # Torque SDK loyalty tracking
+├── components/
+│   ├── GuardianSteps.tsx   # Animated risk step reveal
+│   └── GlassCard.tsx       # Shared card component
+├── hooks/                  # usePayment, useNfc, useBalances, useGhostReceive
+├── context/                # WalletContext (MWA connection state)
+└── utils/                  # Constants, Solana connection
 
-api/server.ts           # Solana Actions / Blinks endpoint
+api/server.ts               # Solana Actions / Blinks endpoint
+tests/phasma-escrow.ts      # Anchor test suite
 ```
-
-## Roadmap
-
-**Phase 1 — Now.** NFC tap-to-pay USDC with ghost mode, SKR tiered cashback, Jupiter auto-swap, phone-to-phone HCE.
-
-**Phase 2 — Shielded.** Light Protocol integration for fully private transfers — amounts and recipients hidden on-chain.
-
-**Phase 3 — Fiat Rails.** On-ramp to USDC, off-ramp from USDC. Neither side touches crypto.
-
-**Phase 4 — Multi-token.** Accept any SPL token, auto-swap to merchant's preferred settlement currency.
 
 ## Tech Stack
 
-- **Framework:** React Native + Expo (bare workflow)
-- **Wallet:** Mobile Wallet Adapter v2 (wallet-agnostic — Phantom, Solflare, etc.)
-- **Blockchain:** `@solana/web3.js`, `@solana/spl-token`
+- **On-chain:** Anchor 0.31 (Rust), Solana devnet
+- **App:** React Native + Expo (bare workflow, Android)
+- **Wallet:** Mobile Wallet Adapter v2 (Phantom)
 - **NFC:** `react-native-nfc-manager` (read/write/HCE)
-- **Routing:** Jupiter v6 (automatic SOL→USDC swap)
-- **Loyalty:** SKR tiered cashback (0.5%–3%)
-- **UI:** React Native Reanimated, custom SVG icons
+- **AI Guardian:** LLM-powered risk analysis, 4s timeout
+- **Routing:** Jupiter v6 (automatic route optimization)
+- **Composability:** Solana Actions / Blinks (spec v2.1.3)
+- **Loyalty:** SKR tiered cashback + Torque SDK
+- **RPC:** Helius devnet
 
 ## License
 

@@ -43,12 +43,24 @@ export function parseSolanaPayUrl(url: string): NfcPaymentData | null {
     const [recipient, queryString] = withoutScheme.split('?');
     if (!recipient) return null;
 
+    // Validate recipient is a plausible base58 public key
+    if (!recipient || recipient.length < 32 || recipient.length > 44) return null;
+
     const params = new URLSearchParams(queryString ?? '');
+    const amount = parseFloat(params.get('amount') ?? '0');
+
+    // Validate amount: must be positive, finite, reasonable
+    if (!Number.isFinite(amount) || amount <= 0 || amount > 100_000) return null;
+
+    // Validate spl-token matches expected USDC mint (reject other tokens)
+    const splToken = params.get('spl-token') ?? USDC_MINT;
+    if (splToken !== USDC_MINT) return null;
+
     return {
       recipient,
-      amount: parseFloat(params.get('amount') ?? '0'),
+      amount,
       label: params.get('label') ?? 'Unknown',
-      splToken: params.get('spl-token') ?? USDC_MINT,
+      splToken,
       reference: params.get('reference') ?? undefined,
     };
   } catch {

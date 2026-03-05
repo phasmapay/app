@@ -3,7 +3,7 @@ import { useState, useCallback } from 'react';
 import { Keypair, PublicKey, Transaction } from '@solana/web3.js';
 import bs58 from 'bs58';
 import { getConnection } from '../utils/solana';
-import { buildUsdcTransferTx, executePayment, PaymentResult } from '../services/payment';
+import { executePayment, PaymentResult } from '../services/payment';
 import { optimizePayment, OptimizationResult } from '../services/agent';
 import { calculateCashback, getSkrTier } from '../services/skr';
 import { saveTransaction } from '../services/storage';
@@ -41,7 +41,7 @@ export type PaymentState =
     }
   | { status: 'signing' }
   | { status: 'confirming'; signature: string }
-  | { status: 'success'; result: PaymentResult; cashback: number; savedGas: number; cashbackSig?: string }
+  | { status: 'success'; result: PaymentResult; cashback: number; savedGas: number }
   | { status: 'error'; message: string };
 
 export function usePayment(
@@ -64,54 +64,40 @@ export function usePayment(
         const senderPubkey = new PublicKey(walletAddress);
         const usdcMint = new PublicKey(USDC_MINT);
 
-        const optimization = await optimizePayment(
-          connection, senderPubkey, paymentData.recipient, paymentData.amount, usdcMint
-        );
+        const skrStatus = getSkrTier(skrBalance);
+
+        // Parallelize: optimization + guardian + vault checks are independent
+        const [optimization, guardian, vaultResult] = await Promise.all([
+          optimizePayment(connection, senderPubkey, paymentData.recipient, paymentData.amount, usdcMint),
+          assessRecipient(connection, paymentData.recipient, paymentData.amount, walletAddress, skrStatus.tier),
+          (async () => {
+            const config = await getVaultConfig();
+            if (!config?.enabled) return { eligible: false, remaining: 0 };
+            const spendCheck = canSpend(config, paymentData.amount);
+            const bal = await getVaultBalance(connection);
+            return { eligible: spendCheck.allowed && bal >= paymentData.amount, remaining: spendCheck.remaining };
+          })(),
+        ]);
+
+        setState({ status: 'guarding' });
 
         if (optimization.strategy === 'insufficient') {
           setState({ status: 'error', message: optimization.reason });
           return;
         }
 
-        // Guardian assessment
-        setState({ status: 'guarding' });
-        const skrStatus = getSkrTier(skrBalance);
-        const guardian = await assessRecipient(
-          connection, paymentData.recipient, paymentData.amount, walletAddress, skrStatus.tier
-        );
-
-        // Vault eligibility
-        let vaultEligible = false;
-        let vaultRemaining = 0;
-        const vaultConfig = await getVaultConfig();
-        if (vaultConfig?.enabled) {
-          const spendCheck = canSpend(vaultConfig, paymentData.amount);
-          const vaultBal = await getVaultBalance(connection);
-          vaultEligible = spendCheck.allowed && vaultBal >= paymentData.amount;
-          vaultRemaining = spendCheck.remaining;
-        }
+        const vaultEligible = vaultResult.eligible;
+        const vaultRemaining = vaultResult.remaining;
 
         // Auto-approve: tier threshold met + vault available
         if (guardian.autoApprove && vaultEligible) {
-          // Skip confirmation entirely — instant payment
           setState({ status: 'signing' });
           const result = await executeVaultPayment(connection, paymentData, walletAddress);
           await recordSpend(paymentData.amount);
           const cashback = calculateCashback(paymentData.amount, skrBalance);
-          await saveTransaction({
-            ...result, savedGas: optimization.savedGas, cashback,
-            strategy: 'direct', type: 'sent',
-          });
-          trackPaymentWithTorque(result.signature, paymentData.amount).catch(() => {});
-          // Fire-and-forget SKR cashback
-          const treasury = getTreasuryKeypair();
-          let cashbackSig: string | undefined;
-          if (treasury && cashback > 0) {
-            cashbackSig = await distributeCashback(
-              connection, treasury, new PublicKey(walletAddress), paymentData.amount, skrBalance
-            ) ?? undefined;
-          }
-          setState({ status: 'success', result, cashback, savedGas: optimization.savedGas, cashbackSig });
+          // Fire-and-forget — don't block instant auto-approve on storage/hooks
+          postPaymentHooks(connection, result, optimization, paymentData, cashback, walletAddress, skrBalance).catch(() => {});
+          setState({ status: 'success', result, cashback, savedGas: optimization.savedGas });
           return;
         }
 
@@ -135,10 +121,10 @@ export function usePayment(
 
     setState({ status: 'signing' });
     try {
+      const connection = getConnection();
       let result: PaymentResult;
 
       if (useVault) {
-        const connection = getConnection();
         result = await executeVaultPayment(connection, paymentData, walletAddress!);
         await recordSpend(paymentData.amount);
       } else if (optimization.strategy === 'swap' && optimization.swapTxData) {
@@ -155,7 +141,6 @@ export function usePayment(
           amount: paymentData.amount, timestamp: Date.now(),
         };
       } else {
-        const connection = getConnection();
         const usdcMint = new PublicKey(USDC_MINT);
         result = await executePayment(
           connection, paymentData.recipient, paymentData.amount,
@@ -166,24 +151,9 @@ export function usePayment(
       setState({ status: 'confirming', signature: result.signature });
 
       const cashback = calculateCashback(paymentData.amount, skrBalance);
+      await postPaymentHooks(connection, result, optimization, paymentData, cashback, walletAddress!, skrBalance);
 
-      await saveTransaction({
-        ...result, savedGas: optimization.savedGas, cashback,
-        strategy: optimization.strategy as 'direct' | 'swap', type: 'sent',
-      });
-
-      trackPaymentWithTorque(result.signature, paymentData.amount).catch(() => {});
-
-      // Fire-and-forget SKR cashback
-      const treasury = getTreasuryKeypair();
-      let cashbackSig: string | undefined;
-      if (treasury && cashback > 0) {
-        cashbackSig = await distributeCashback(
-          connection, treasury, new PublicKey(walletAddress!), paymentData.amount, skrBalance
-        ).catch(() => null) ?? undefined;
-      }
-
-      setState({ status: 'success', result, cashback, savedGas: optimization.savedGas, cashbackSig });
+      setState({ status: 'success', result, cashback, savedGas: optimization.savedGas });
     } catch (err) {
       console.warn('[Payment] confirm failed:', err);
       const raw = err instanceof Error ? err.message : String(err);
@@ -203,6 +173,29 @@ export function usePayment(
   }, []);
 
   return { state, prepare, confirm, reset };
+}
+
+async function postPaymentHooks(
+  connection: ReturnType<typeof getConnection>,
+  result: PaymentResult,
+  optimization: OptimizationResult,
+  paymentData: NfcPaymentData,
+  cashback: number,
+  walletAddress: string,
+  skrBalance: number,
+): Promise<void> {
+  await saveTransaction({
+    ...result, savedGas: optimization.savedGas, cashback,
+    strategy: optimization.strategy as 'direct' | 'swap', type: 'sent',
+  });
+  trackPaymentWithTorque(result.signature, paymentData.amount).catch(() => {});
+  // Fire-and-forget SKR cashback — do not await
+  const treasury = getTreasuryKeypair();
+  if (treasury && cashback > 0) {
+    distributeCashback(
+      connection, treasury, new PublicKey(walletAddress), paymentData.amount, skrBalance
+    ).catch(() => null);
+  }
 }
 
 async function executeVaultPayment(

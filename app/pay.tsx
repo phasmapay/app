@@ -50,7 +50,6 @@ export default function PayScreen() {
           recipient: payState.result.recipient,
           cashback: payState.cashback.toString(),
           savedGas: payState.savedGas.toString(),
-          cashbackSig: payState.cashbackSig ?? '',
           skrBalance: skrStatus.balance.toString(),
         },
       });
@@ -81,10 +80,10 @@ export default function PayScreen() {
     if (tapResetTimer.current) clearTimeout(tapResetTimer.current);
     tapResetTimer.current = setTimeout(() => { tapCount.current = 0; }, 800);
 
-    if (tapCount.current >= 3) {
+    if (__DEV__ && tapCount.current >= 3) {
       tapCount.current = 0;
       const mockData = mockNfcRead(
-        '7xKXtg2CW87d97TXJSDpbD5jBkheTqA3esVKk3X7DHhP',
+        '5HhoQzBkQ19W5vNZSK46tmUCtVPJNJDkxA83QdD21itN',
         1.00
       );
       prepare(mockData);
