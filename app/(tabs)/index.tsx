@@ -407,7 +407,7 @@ export default function HomeScreen() {
         </GlassCard>
 
         {/* 5. Vault Card */}
-        {homeData.vaultConfig?.enabled && (
+        {homeData.vaultConfig?.enabled ? (
           <TouchableOpacity onPress={() => router.push('/vault')} activeOpacity={0.7}>
             <GlassCard glow={colors.green} style={{ padding: space.base, marginBottom: space.base }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -435,6 +435,21 @@ export default function HomeScreen() {
                   height: '100%', borderRadius: 2, backgroundColor: colors.green,
                   width: `${Math.min((homeData.vaultConfig.spentToday / homeData.vaultConfig.dailyLimit) * 100, 100)}%`,
                 }} />
+              </View>
+            </GlassCard>
+          </TouchableOpacity>
+        ) : isConnected && (
+          <TouchableOpacity onPress={() => router.push('/vault')} activeOpacity={0.7}>
+            <GlassCard style={{ padding: space.base, marginBottom: space.base }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <VaultIcon size={20} color={colors.textSub} />
+                <View style={{ marginLeft: 12, flex: 1 }}>
+                  <Text style={{ color: colors.text, fontWeight: '700', fontSize: 15 }}>Set Up Tap Vault</Text>
+                  <Text style={{ color: colors.textSub, fontSize: 11, marginTop: 2 }}>
+                    Instant payments — no wallet popups
+                  </Text>
+                </View>
+                <Text style={{ color: colors.purple, fontSize: 22 }}>›</Text>
               </View>
             </GlassCard>
           </TouchableOpacity>
