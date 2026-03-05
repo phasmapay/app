@@ -43,7 +43,7 @@ const ACTIONS: ActionConfig[] = [
   { label: 'Pay', Icon: ArrowUpIcon, bg: colors.purple, isPrimary: true, route: '/pay' },
   { label: 'Receive', Icon: ArrowDownIcon, bg: colors.green, isPrimary: true, route: '/receive' },
   { label: 'Ghost Pay', Icon: GhostPayIcon, bg: colors.surface2, isPrimary: false, route: '/ghost-pay', borderColor: colors.purpleDim },
-  { label: 'Ghost Recv', Icon: GhostReceiveIcon, bg: colors.surface2, isPrimary: false, route: '/ghost-receive', borderColor: colors.ghostDim },
+  { label: 'Ghost Recv', Icon: GhostReceiveIcon, bg: colors.surface2, isPrimary: false, route: '/ghost-receive', borderColor: colors.greenDim },
 ];
 
 function ActionButton({ config }: { config: ActionConfig }) {
@@ -88,7 +88,7 @@ const INITIAL_HOME: HomeData = {
 // --- Transaction Row ---
 
 const TX_COLORS = {
-  sent:     { color: colors.error, bg: 'rgba(239,68,68,0.10)' },
+  sent:     { color: colors.purple, bg: colors.purpleDim },
   received: { color: colors.green, bg: colors.greenDim },
 };
 

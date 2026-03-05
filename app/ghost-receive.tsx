@@ -61,11 +61,11 @@ function GhostPulse({ active }: { active: boolean }) {
           width: 140, height: 140, borderRadius: 70,
           alignItems: 'center', justifyContent: 'center',
           borderWidth: 2,
-          borderColor: active ? colors.green : colors.purple,
-          backgroundColor: active ? colors.greenDim : colors.purpleDim,
+          borderColor: colors.green,
+          backgroundColor: colors.greenDim,
         }}
       >
-        <Image source={ghostIcon} style={{ width: 56, height: 56, tintColor: active ? colors.green : colors.purple }} />
+        <Image source={ghostIcon} style={{ width: 56, height: 56, tintColor: colors.green }} />
       </View>
     </Animated.View>
   );
@@ -179,10 +179,10 @@ export default function GhostReceiveScreen() {
           </Text>
           <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 24 }}>
             <View style={{
-              backgroundColor: colors.purpleDim, borderRadius: 6,
+              backgroundColor: colors.ghostDim, borderRadius: 6,
               paddingHorizontal: 8, paddingVertical: 3, flexDirection: 'row', alignItems: 'center',
             }}>
-              <Text style={{ color: colors.purple, fontSize: 11, fontWeight: '600' }}>
+              <Text style={{ color: colors.ghost, fontSize: 11, fontWeight: '600' }}>
                 One-time address
               </Text>
             </View>
@@ -192,14 +192,14 @@ export default function GhostReceiveScreen() {
           <View style={{
             borderRadius: 16, padding: 20, marginBottom: 20,
             backgroundColor: colors.surface0,
-            borderWidth: 1, borderColor: isFocused ? colors.purple : colors.border,
+            borderWidth: 1, borderColor: isFocused ? colors.green : colors.border,
             elevation: 1,
           }}>
             <Text style={{ color: colors.textSub, fontSize: 11, textTransform: 'uppercase', letterSpacing: 1.2, marginBottom: 12 }}>
               Amount (USDC)
             </Text>
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-              <Text style={{ color: colors.purple, fontSize: 30, fontWeight: '700', marginRight: 8 }}>$</Text>
+              <Text style={{ color: colors.green, fontSize: 30, fontWeight: '700', marginRight: 8 }}>$</Text>
               <TextInput
                 style={{ flex: 1, color: colors.text, fontSize: 30, fontWeight: '700' }}
                 value={amount}
@@ -228,8 +228,8 @@ export default function GhostReceiveScreen() {
 
           {status === 'generating' && (
             <View style={{ alignItems: 'center' }}>
-              <ActivityIndicator color={colors.purple} size="small" />
-              <Text style={{ color: colors.purple, marginTop: 10, fontWeight: '600' }}>
+              <ActivityIndicator color={colors.green} size="small" />
+              <Text style={{ color: colors.green, marginTop: 10, fontWeight: '600' }}>
                 Generating ephemeral keypair...
               </Text>
             </View>
@@ -237,8 +237,8 @@ export default function GhostReceiveScreen() {
 
           {status === 'writing' && (
             <View style={{ alignItems: 'center' }}>
-              <ActivityIndicator color={colors.purple} size="small" />
-              <Text style={{ color: colors.purple, marginTop: 10, fontWeight: '600' }}>
+              <ActivityIndicator color={colors.green} size="small" />
+              <Text style={{ color: colors.green, marginTop: 10, fontWeight: '600' }}>
                 Writing NFC tag...
               </Text>
               <Text style={{ color: colors.textMute, fontSize: 12, marginTop: 4 }}>
@@ -254,8 +254,8 @@ export default function GhostReceiveScreen() {
 
           {status === 'polling' && (
             <View style={{ alignItems: 'center' }}>
-              <ActivityIndicator color={colors.purple} size="small" />
-              <Text style={{ color: colors.purple, marginTop: 10, fontWeight: '600' }}>
+              <ActivityIndicator color={colors.green} size="small" />
+              <Text style={{ color: colors.green, marginTop: 10, fontWeight: '600' }}>
                 Waiting for payment...
               </Text>
               <CountdownTimer key={timerKey.current} totalSec={POLL_TIMEOUT_SEC} />
@@ -283,20 +283,20 @@ export default function GhostReceiveScreen() {
               </Text>
               <TouchableOpacity
                 style={{
-                  backgroundColor: colors.purple, borderRadius: 16,
+                  backgroundColor: colors.green, borderRadius: 16,
                   paddingVertical: 18, alignItems: 'center', elevation: 4,
                 }}
                 onPress={() => handleClaim()}
               >
-                <Text style={{ color: '#fff', fontWeight: '700', fontSize: 17 }}>Claim to Wallet</Text>
+                <Text style={{ color: '#000', fontWeight: '700', fontSize: 17 }}>Claim to Wallet</Text>
               </TouchableOpacity>
             </View>
           )}
 
           {status === 'claiming' && (
             <View style={{ alignItems: 'center' }}>
-              <ActivityIndicator color={colors.purple} size="large" />
-              <Text style={{ color: colors.purple, marginTop: 12, fontWeight: '600', fontSize: 15 }}>
+              <ActivityIndicator color={colors.green} size="large" />
+              <Text style={{ color: colors.green, marginTop: 12, fontWeight: '600', fontSize: 15 }}>
                 Claiming funds...
               </Text>
               <Text style={{ color: colors.textMute, fontSize: 12, marginTop: 4 }}>
@@ -319,12 +319,12 @@ export default function GhostReceiveScreen() {
               </Text>
               <TouchableOpacity
                 style={{
-                  backgroundColor: colors.purple, borderRadius: 16,
+                  backgroundColor: colors.green, borderRadius: 16,
                   paddingVertical: 16, paddingHorizontal: 40, elevation: 4,
                 }}
                 onPress={hook.reset}
               >
-                <Text style={{ color: '#fff', fontWeight: '700', fontSize: 16 }}>Try Again</Text>
+                <Text style={{ color: '#000', fontWeight: '700', fontSize: 16 }}>Try Again</Text>
               </TouchableOpacity>
             </View>
           )}
@@ -334,14 +334,14 @@ export default function GhostReceiveScreen() {
             <View style={{ position: 'absolute', bottom: 90, left: 20, right: 20 }}>
               <TouchableOpacity
                 style={{
-                  backgroundColor: canStart ? colors.purple : colors.surface2,
+                  backgroundColor: canStart ? colors.green : colors.surface2,
                   borderRadius: 18, paddingVertical: 20, alignItems: 'center',
                   elevation: canStart ? 8 : 0,
                 }}
                 onPress={handleStart}
                 disabled={!canStart}
               >
-                <Text style={{ color: canStart ? '#fff' : colors.textMute, fontWeight: '700', fontSize: 17 }}>
+                <Text style={{ color: canStart ? '#000' : colors.textMute, fontWeight: '700', fontSize: 17 }}>
                   Start Ghost Session
                 </Text>
               </TouchableOpacity>

@@ -128,14 +128,14 @@ export default function GhostPayScreen() {
 
         {/* NFC Animation — ghost green */}
         <TouchableOpacity onPress={handleDevTap} activeOpacity={1}>
-          <NfcRipple stage={nfcStage} ghost />
+          <NfcRipple stage={nfcStage} />
         </TouchableOpacity>
 
         {/* Status */}
         <Text
           style={{
             fontSize: 18, marginTop: space.xxl, fontWeight: '600', textAlign: 'center',
-            color: hasError ? colors.error : isScanning ? colors.ghost : colors.textSub,
+            color: hasError ? colors.error : isScanning ? colors.purple : colors.textSub,
             letterSpacing: 0.5,
           }}
         >
@@ -144,7 +144,7 @@ export default function GhostPayScreen() {
 
         {/* Payment confirmation card */}
         {payState.status === 'awaiting_approval' && (
-          <GlassCard glow={colors.ghost} style={{ width: '100%', padding: space.lg, marginTop: space.xl }}>
+          <GlassCard glow={colors.purple} style={{ width: '100%', padding: space.lg, marginTop: space.xl }}>
             {/* Guardian verdict badge */}
             <View style={{ marginBottom: space.md }}>
               <GuardianBadge risk={payState.guardian.risk} summary={payState.guardian.summary} />
@@ -198,7 +198,7 @@ export default function GhostPayScreen() {
               onPress={() => setShowGuardianDetails(!showGuardianDetails)}
               style={{ marginBottom: space.md }}
             >
-              <Text style={{ color: colors.ghost, fontSize: 12, fontWeight: '600' }}>
+              <Text style={{ color: colors.purple, fontSize: 12, fontWeight: '600' }}>
                 {showGuardianDetails ? 'Hide analysis ▲' : 'View analysis ▼'}
               </Text>
             </TouchableOpacity>
@@ -247,11 +247,11 @@ export default function GhostPayScreen() {
                 <TouchableOpacity
                   style={{
                     flex: 1, borderRadius: radius.lg, paddingVertical: space.base, alignItems: 'center',
-                    backgroundColor: payState.guardian.risk === 'red' ? colors.warning : colors.ghost,
+                    backgroundColor: payState.guardian.risk === 'red' ? colors.warning : colors.purple,
                   }}
                   onPress={() => confirm(false)}
                 >
-                  <Text style={{ color: colors.base, fontWeight: '700' }}>
+                  <Text style={{ color: '#fff', fontWeight: '700' }}>
                     {payState.guardian.risk === 'red' ? 'Proceed Anyway' : 'Confirm'}
                   </Text>
                 </TouchableOpacity>
@@ -267,10 +267,10 @@ export default function GhostPayScreen() {
               <View>
                 <Text style={{ color: colors.error, textAlign: 'center', fontSize: 14, marginBottom: space.base }}>{errorMessage}</Text>
                 <TouchableOpacity
-                  style={{ backgroundColor: colors.ghost, borderRadius: radius.lg, paddingVertical: space.lg, alignItems: 'center' }}
+                  style={{ backgroundColor: colors.purple, borderRadius: radius.lg, paddingVertical: space.lg, alignItems: 'center' }}
                   onPress={handleReset}
                 >
-                  <Text style={{ color: colors.base, fontWeight: '700', fontSize: 17 }}>Try Again</Text>
+                  <Text style={{ color: '#fff', fontWeight: '700', fontSize: 17 }}>Try Again</Text>
                 </TouchableOpacity>
               </View>
             ) : isScanning || isProcessing ? (
@@ -278,12 +278,12 @@ export default function GhostPayScreen() {
                 style={{ backgroundColor: colors.surface1, borderRadius: radius.lg, paddingVertical: space.lg, alignItems: 'center', borderWidth: 1, borderColor: colors.surface2 }}
                 onPress={handleReset}
               >
-                <ActivityIndicator color={colors.ghost} />
+                <ActivityIndicator color={colors.purple} />
                 <Text style={{ color: colors.textSub, fontSize: 14, marginTop: space.sm }}>Cancel</Text>
               </TouchableOpacity>
             ) : (
               <TouchableOpacity
-                style={{ backgroundColor: colors.ghost, borderRadius: radius.lg, paddingVertical: space.lg, alignItems: 'center' }}
+                style={{ backgroundColor: colors.purple, borderRadius: radius.lg, paddingVertical: space.lg, alignItems: 'center' }}
                 onPress={
                   nfcState.status === 'disabled'
                     ? () => Alert.alert('NFC is Disabled', 'Please enable NFC in your device settings.', [{ text: 'OK' }])
@@ -292,7 +292,7 @@ export default function GhostPayScreen() {
                     : startScan
                 }
               >
-                <Text style={{ color: colors.base, fontWeight: '700', fontSize: 17 }}>Scan Ghost Tag</Text>
+                <Text style={{ color: '#fff', fontWeight: '700', fontSize: 17 }}>Scan Ghost Tag</Text>
               </TouchableOpacity>
             )}
           </View>

@@ -142,14 +142,14 @@ export default function ReceiveScreen() {
           <View style={{
             borderRadius: 16, padding: 20, marginBottom: 20,
             backgroundColor: colors.surface0,
-            borderWidth: 1, borderColor: isFocused ? colors.purple : colors.border,
+            borderWidth: 1, borderColor: isFocused ? colors.green : colors.border,
             elevation: 1,
           }}>
             <Text style={{ color: colors.textSub, fontSize: 11, textTransform: 'uppercase', letterSpacing: 1.2, marginBottom: 12 }}>
               Amount (USDC)
             </Text>
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-              <Text style={{ color: colors.purple, fontSize: 30, fontWeight: '700', marginRight: 8 }}>$</Text>
+              <Text style={{ color: colors.green, fontSize: 30, fontWeight: '700', marginRight: 8 }}>$</Text>
               <TextInput
                 style={{ flex: 1, color: colors.text, fontSize: 30, fontWeight: '700' }}
                 value={amount}
@@ -185,14 +185,14 @@ export default function ReceiveScreen() {
                   width: 160, height: 160, borderRadius: 80,
                   alignItems: 'center', justifyContent: 'center',
                   borderWidth: 2,
-                  borderColor: isReady ? colors.green : colors.purple,
-                  backgroundColor: isReady ? colors.greenDim : colors.purpleDim,
+                  borderColor: colors.green,
+                  backgroundColor: colors.greenDim,
                 }}
               >
-                <Text style={{ fontSize: 20, color: isReady ? colors.green : colors.purple, fontWeight: '700' }}>
+                <Text style={{ fontSize: 20, color: colors.green, fontWeight: '700' }}>
                   {isReady ? 'TAP' : 'NFC'}
                 </Text>
-                <Text style={{ fontSize: 14, fontWeight: '600', marginTop: 8, color: isReady ? colors.green : colors.purple }}>
+                <Text style={{ fontSize: 14, fontWeight: '600', marginTop: 8, color: colors.green }}>
                   {isReady ? 'Ready' : 'Idle'}
                 </Text>
               </View>
@@ -230,7 +230,7 @@ export default function ReceiveScreen() {
                 <TouchableOpacity
                   style={{
                     borderRadius: 16, paddingVertical: 16, paddingHorizontal: 32, alignItems: 'center',
-                    backgroundColor: colors.surface0, borderWidth: 1, borderColor: colors.purple, elevation: 1,
+                    backgroundColor: colors.surface0, borderWidth: 1, borderColor: colors.green, elevation: 1,
                   }}
                   onPress={() => {
                     const { url } = buildSolanaPayUrl(publicKey.toBase58(), parseFloat(amount));
@@ -240,7 +240,7 @@ export default function ReceiveScreen() {
                     });
                   }}
                 >
-                  <Text style={{ color: colors.purple, fontWeight: '600' }}>Share Payment Link</Text>
+                  <Text style={{ color: colors.green, fontWeight: '600' }}>Share Payment Link</Text>
                 </TouchableOpacity>
               )}
             </View>
