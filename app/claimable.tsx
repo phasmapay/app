@@ -203,11 +203,11 @@ export default function ClaimableScreen() {
         {/* Header */}
         <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 24 }}>
           <TouchableOpacity onPress={() => router.back()} style={{ marginRight: 12 }}>
-            <Text style={{ color: '#888', fontSize: 28 }}>‹</Text>
+            <Text style={{ color: colors.textSub, fontSize: 28 }}>‹</Text>
           </TouchableOpacity>
           <View style={{ flex: 1 }}>
-            <Text style={{ color: '#fff', fontSize: 24, fontWeight: '700' }}>Claimable</Text>
-            <Text style={{ color: '#666', fontSize: 12, marginTop: 2 }}>
+            <Text style={{ color: colors.text, fontSize: 24, fontWeight: '700' }}>Claimable</Text>
+            <Text style={{ color: colors.textMute, fontSize: 12, marginTop: 2 }}>
               Ghost payments waiting to be swept
             </Text>
           </View>
@@ -215,34 +215,31 @@ export default function ClaimableScreen() {
 
         {loading ? (
           <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-            <ActivityIndicator color="#9945FF" size="large" />
-            <Text style={{ color: '#888', marginTop: 12 }}>Checking on-chain balances...</Text>
+            <ActivityIndicator color={colors.purple} size="large" />
+            <Text style={{ color: colors.textSub, marginTop: 12 }}>Checking on-chain balances...</Text>
           </View>
         ) : items.length === 0 ? (
           <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-            <GhostIcon size={48} color="#333" />
-            <Text style={{ color: '#555', fontSize: 16, marginTop: 16 }}>No claimable payments</Text>
-            <Text style={{ color: '#444', fontSize: 13, marginTop: 4 }}>
+            <GhostIcon size={48} color={colors.textMute} />
+            <Text style={{ color: colors.textSub, fontSize: 16, marginTop: 16 }}>No claimable payments</Text>
+            <Text style={{ color: colors.textMute, fontSize: 13, marginTop: 4 }}>
               Ghost payments with funds will appear here
             </Text>
           </View>
         ) : (
           <>
             {/* Total banner */}
-            <View style={{
-              backgroundColor: colors.surface0, borderRadius: 20, padding: 20, marginBottom: 16,
-              borderWidth: 1, borderColor: '#14F195',
-            }}>
-              <Text style={{ color: '#888', fontSize: 12, fontWeight: '500', letterSpacing: 0.5 }}>
+            <GlassCard glow={colors.green} style={{ padding: 20, marginBottom: 16 }}>
+              <Text style={{ color: colors.textSub, fontSize: 12, fontWeight: '500', letterSpacing: 0.5 }}>
                 TOTAL CLAIMABLE
               </Text>
-              <Text style={{ color: '#fff', fontSize: 32, fontWeight: '800', marginTop: 4 }}>
+              <Text style={{ color: colors.text, fontSize: 32, fontWeight: '800', marginTop: 4 }}>
                 ${totalUsdc.toFixed(2)} USDC
               </Text>
-              <Text style={{ color: '#666', fontSize: 12, marginTop: 4 }}>
+              <Text style={{ color: colors.textMute, fontSize: 12, marginTop: 4 }}>
                 {items.length} payment{items.length > 1 ? 's' : ''} across {items.length} ephemeral address{items.length > 1 ? 'es' : ''}
               </Text>
-            </View>
+            </GlassCard>
 
             {/* List */}
             <FlatList
@@ -251,27 +248,27 @@ export default function ClaimableScreen() {
               showsVerticalScrollIndicator={false}
               renderItem={({ item }) => (
                 <View style={{
-                  backgroundColor: '#141414', borderRadius: 16, padding: 16, marginBottom: 8,
-                  borderWidth: 1, borderColor: '#1f1f1f',
+                  backgroundColor: colors.surface0, borderRadius: 16, padding: 16, marginBottom: 8,
+                  borderWidth: 1, borderColor: colors.border,
                   flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
                 }}>
                   <View>
-                    <Text style={{ color: '#fff', fontSize: 18, fontWeight: '700' }}>
+                    <Text style={{ color: colors.text, fontSize: 18, fontWeight: '700' }}>
                       ${(Number(item.onChainBalance) / 1_000_000).toFixed(2)} USDC
                     </Text>
-                    <Text style={{ color: '#555', fontSize: 11, marginTop: 2 }}>
+                    <Text style={{ color: colors.textSub, fontSize: 11, marginTop: 2 }}>
                       {truncate(item.ephemeralPubkey)}
                     </Text>
-                    <Text style={{ color: '#444', fontSize: 10, marginTop: 1 }}>
+                    <Text style={{ color: colors.textMute, fontSize: 10, marginTop: 1 }}>
                       {new Date(item.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
                     </Text>
                   </View>
                   <View style={{
-                    backgroundColor: item.status === 'failed' ? 'rgba(255,71,71,0.1)' : 'rgba(20,241,149,0.1)',
+                    backgroundColor: item.status === 'failed' ? 'rgba(239,68,68,0.1)' : colors.greenDim,
                     paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8,
                   }}>
                     <Text style={{
-                      color: item.status === 'failed' ? '#FF4747' : '#14F195',
+                      color: item.status === 'failed' ? colors.error : colors.green,
                       fontSize: 11, fontWeight: '600',
                     }}>
                       {item.status === 'failed' ? 'Retry' : 'Ready'}
@@ -285,19 +282,18 @@ export default function ClaimableScreen() {
             {/* Claim All button */}
             <TouchableOpacity
               style={{
-                backgroundColor: claiming ? '#555' : '#9945FF',
+                backgroundColor: claiming ? colors.surface2 : colors.green,
                 borderRadius: 18, paddingVertical: 20, alignItems: 'center',
                 marginTop: 12, marginBottom: 16,
-                shadowColor: '#9945FF', shadowOpacity: claiming ? 0 : 0.5,
-                shadowRadius: 16, shadowOffset: { width: 0, height: 0 }, elevation: 10,
+                elevation: claiming ? 0 : 10,
               }}
               onPress={handleClaimAll}
               disabled={claiming}
             >
               {claiming ? (
                 <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                  <ActivityIndicator color="#fff" size="small" />
-                  <Text style={{ color: '#fff', fontWeight: '700', fontSize: 17, marginLeft: 8 }}>
+                  <ActivityIndicator color={colors.text} size="small" />
+                  <Text style={{ color: colors.text, fontWeight: '700', fontSize: 17, marginLeft: 8 }}>
                     Claiming...
                   </Text>
                 </View>
