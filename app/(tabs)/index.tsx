@@ -345,7 +345,7 @@ export default function HomeScreen() {
               </Text>
             </View>
             <Text style={{ color: colors.textSub, fontWeight: '600', fontSize: 12, marginLeft: 8 }}>
-              {skrStatus.balance.toLocaleString()} SKR
+              {skrStatus.balance.toLocaleString('en-US')} SKR
             </Text>
             <View style={{ flex: 1 }} />
             <Text style={{ color: colors.green, fontSize: 11, fontWeight: '600' }}>
@@ -401,7 +401,7 @@ export default function HomeScreen() {
               <Text style={{ color: colors.textMute, fontSize: 11 }}>Seeker</Text>
             </View>
             <Text style={{ color: colors.text, fontWeight: '700', fontSize: 14 }}>
-              {homeData.balanceHidden ? '\u2022\u2022\u2022\u2022' : skrStatus.balance.toLocaleString()}
+              {homeData.balanceHidden ? '\u2022\u2022\u2022\u2022' : skrStatus.balance.toLocaleString('en-US')}
             </Text>
           </View>
         </GlassCard>
