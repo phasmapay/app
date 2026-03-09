@@ -30,7 +30,7 @@ Every payment runs through a 5-check risk engine before you confirm:
 Results are sent to an LLM-powered API, which returns a plain-English risk summary in under 4 seconds. Falls back to a static summary if the API times out. Green (≥70) / Yellow (40–70) / Red (<40) scoring. Gold SKR tier + green score = auto-approve, no confirmation needed.
 
 **Tap Vault**
-Dedicated keypair stored in `expo-secure-store`. Pre-load USDC from your main wallet once. Payments sign locally — no MWA popup, sub-second confirmation. Daily spending limits reset at midnight and scale with your SKR tier.
+Dedicated keypair stored in `expo-secure-store`. Pre-load USDC from your main wallet once. Payments sign locally — no MWA popup, sub-second confirmation. Daily spending limits cap how much can be spent if the device is compromised — since the vault signs without wallet approval, the limit is the safety net. Limits reset at midnight and scale with your SKR tier.
 
 **Ghost Mode**
 Privacy payments via a fresh escrow PDA per transaction. The recipient's real wallet never appears in the sender's transaction history. Recipient claims via any Blink-compatible wallet (dial.to, Phantom, Backpack).
