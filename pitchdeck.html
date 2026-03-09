@@ -1,0 +1,1103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PhasmaPay — Pitch Deck</title>
+<link rel="preconnect" href="https://api.fontshare.com">
+<link href="https://api.fontshare.com/v2/css?f[]=clash-display@400,500,600,700&f[]=general-sans@400,500,600&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --bg: #0a0a14;
+  --bg-card: #151525;
+  --border: rgba(255,255,255,0.07);
+  --border-hover: rgba(255,255,255,0.14);
+  --purple: #8B5CF6;
+  --purple-light: #A78BFA;
+  --purple-dark: #6D28D9;
+  --purple-glow: rgba(139,92,246,0.25);
+  --cyan: #38bdf8;
+  --text: #e2e8f0;
+  --muted: rgba(255,255,255,0.85);
+  --muted-strong: rgba(255,255,255,0.9);
+  --red: #ef4444;
+  --green: #4ade80;
+  --amber: #f59e0b;
+  --pink: #ec4899;
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'General Sans', -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+  height: 100vh;
+  height: 100dvh;
+  width: 100vw;
+}
+
+/* ═══ NOISE OVERLAY ═══ */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.02'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 9999;
+  opacity: 0.5;
+}
+
+/* ═══ BACKGROUND ORBS ═══ */
+.bg-orbs { position: fixed; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
+.orb { position: absolute; border-radius: 50%; filter: blur(120px); opacity: 0.12; animation: orbFloat 20s ease-in-out infinite; }
+.orb-1 { width: 600px; height: 600px; background: var(--purple); top: -200px; right: -100px; }
+.orb-2 { width: 500px; height: 500px; background: var(--pink); bottom: -150px; left: -100px; animation-delay: -7s; }
+.orb-3 { width: 400px; height: 400px; background: var(--cyan); top: 40%; left: 50%; animation-delay: -14s; opacity: 0.06; }
+
+@keyframes orbFloat {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(30px, -40px) scale(1.05); }
+  66% { transform: translate(-20px, 30px) scale(0.95); }
+}
+
+/* ═══ LAYOUT ═══ */
+.deck-wrapper { display: flex; flex-direction: column; height: 100vh; height: 100dvh; width: 100vw; position: relative; z-index: 1; }
+.deck { position: relative; flex: 1; min-height: 0; }
+
+.slide {
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding: clamp(1rem, 4vw, 40px) clamp(1.5rem, 6vw, 80px);
+  opacity: 0; pointer-events: none;
+  will-change: opacity, transform;
+  transition: opacity 0.5s cubic-bezier(0.22,1,0.36,1), transform 0.5s cubic-bezier(0.22,1,0.36,1);
+  overflow: hidden;
+}
+.slide.active { opacity: 1; transform: translateY(0) scale(1); pointer-events: auto; }
+.slide.slide-below { transform: translateY(40px) scale(0.98); }
+.slide.slide-above { transform: translateY(-40px) scale(0.98); }
+
+/* ═══ SPEAKER NOTES BAR ═══ */
+.notes-bar {
+  flex-shrink: 0; height: 72px;
+  background: rgba(0,0,0,0.5); border-top: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  padding: 0 80px; position: relative; z-index: 10;
+  backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+}
+.notes-text { font-size: 13px; color: var(--muted-strong); text-align: center; max-width: 900px; line-height: 1.5; transition: opacity 0.4s ease; }
+.notes-text strong { color: var(--purple-light); font-weight: 600; }
+
+/* ═══ PROGRESS BAR ═══ */
+.progress-bar {
+  position: fixed; top: 0; left: 0; height: 2px;
+  background: linear-gradient(90deg, var(--purple), var(--purple-light));
+  z-index: 100; transition: width 0.4s cubic-bezier(0.22,1,0.36,1);
+  box-shadow: 0 0 20px var(--purple-glow);
+}
+
+/* ═══ SLIDE COUNTER ═══ */
+.slide-counter { position: fixed; bottom: 96px; right: 40px; z-index: 100; font-size: 13px; font-weight: 500; color: var(--muted); font-variant-numeric: tabular-nums; }
+.slide-counter .current { color: #fff; }
+
+/* ═══ NAV HINT ═══ */
+.nav-hint { position: fixed; bottom: 96px; left: 40px; z-index: 100; font-size: 11px; color: var(--muted); display: flex; align-items: center; gap: 8px; opacity: 0.6; }
+.nav-hint kbd { display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 4px; border: 1px solid var(--border); background: rgba(255,255,255,0.03); font-size: 10px; font-family: inherit; color: var(--muted-strong); }
+
+/* ═══ TYPOGRAPHY ═══ */
+h1, h2, h3 { font-family: 'Clash Display', 'General Sans', sans-serif; }
+.slide-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.15em; color: var(--purple-light); margin-bottom: 16px; }
+.slide-title { font-size: clamp(28px, 4vw, 52px); font-weight: 600; line-height: 1.1; color: #fff; letter-spacing: -0.025em; text-align: center; max-width: 900px; }
+.slide-subtitle { font-size: clamp(14px, 1.6vw, 17px); color: var(--muted); line-height: 1.7; text-align: center; max-width: 640px; margin-top: 14px; }
+
+/* ═══ GLASS CARD ═══ */
+.card {
+  background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px;
+  padding: 28px; transition: border-color 0.3s ease; position: relative; overflow: hidden;
+}
+.card::before {
+  content: ''; position: absolute; top: 0; left: 15%; right: 15%; height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(139,92,246,0.2), transparent); pointer-events: none;
+}
+
+/* ═══ STAGGER ANIMATIONS ═══ */
+.slide.active .stagger { animation: staggerIn 0.5s cubic-bezier(0.22,1,0.36,1) both; }
+.slide.active .stagger:nth-child(1) { animation-delay: 0.1s; }
+.slide.active .stagger:nth-child(2) { animation-delay: 0.18s; }
+.slide.active .stagger:nth-child(3) { animation-delay: 0.26s; }
+.slide.active .stagger:nth-child(4) { animation-delay: 0.34s; }
+.slide.active .stagger:nth-child(5) { animation-delay: 0.42s; }
+.slide.active .stagger:nth-child(6) { animation-delay: 0.50s; }
+.slide.active .stagger:nth-child(7) { animation-delay: 0.58s; }
+.slide.active .stagger:nth-child(8) { animation-delay: 0.66s; }
+@keyframes staggerIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+/* ═══ BADGE ═══ */
+.badge {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 7px 16px; border-radius: 100px;
+  background: rgba(255,255,255,0.03); border: 1px solid var(--border);
+  font-size: 12px; font-weight: 500; color: var(--muted);
+}
+.badge-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); animation: pulse 2s ease-in-out infinite; }
+@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+/* ═══ BRAND ICON ═══ */
+.brand-icon { width: 24px; height: 24px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
+.brand-icon img { width: 100%; height: 100%; object-fit: contain; }
+
+/* ═══ ICON BOX ═══ */
+.icon-box {
+  width: 48px; height: 48px; border-radius: 14px;
+  display: flex; align-items: center; justify-content: center;
+  margin-bottom: 16px; flex-shrink: 0;
+}
+.icon-box img { width: 24px; height: 24px; }
+.icon-box svg { width: 24px; height: 24px; }
+.icon-box.purple { background: rgba(139,92,246,0.12); }
+.icon-box.cyan { background: rgba(56,189,248,0.12); }
+.icon-box.amber { background: rgba(245,158,11,0.12); }
+.icon-box.red { background: rgba(239,68,68,0.12); }
+.icon-box.green { background: rgba(74,222,128,0.12); }
+.icon-box.pink { background: rgba(236,72,153,0.12); }
+
+/* ═══ GRID LAYOUTS ═══ */
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; width: 100%; max-width: 880px; }
+.grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; width: 100%; max-width: 960px; }
+.grid-5 { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; width: 100%; max-width: 1000px; }
+
+/* ═══ TITLE SLIDE ═══ */
+.title-logo { width: 80px; height: 80px; margin-bottom: 24px; animation: logoFloat 4s ease-in-out infinite; }
+@keyframes logoFloat { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+.title-name { font-family: 'Clash Display', sans-serif; font-size: clamp(48px, 7vw, 80px); font-weight: 700; color: #fff; letter-spacing: -0.04em; line-height: 1; margin-bottom: 12px; }
+.title-tagline { font-size: clamp(15px, 1.8vw, 19px); color: var(--muted); font-weight: 400; max-width: 560px; text-align: center; line-height: 1.6; }
+
+/* ═══ BADGE ROW ═══ */
+.badge-row { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin-top: 40px; }
+.badge-row .badge { font-size: 11px; gap: 6px; }
+.badge-row .badge img { width: 14px; height: 14px; }
+
+/* ═══ PAIN CARDS ═══ */
+.pain-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; width: 100%; max-width: 800px; }
+.pain-card { padding: 24px; }
+.pain-card .pain-icon { width: 40px; height: 40px; border-radius: 12px; display: flex; align-items: center; justify-content: center; margin-bottom: 14px; }
+.pain-card .pain-icon svg { width: 20px; height: 20px; }
+.pain-card h3 { font-size: 15px; color: #fff; margin-bottom: 6px; }
+.pain-card p { font-size: 13px; color: var(--muted); line-height: 1.6; }
+
+/* ═══ SOLUTION PILLARS ═══ */
+.pillar { padding: 24px; text-align: center; }
+.pillar h3 { font-size: 15px; color: #fff; margin-bottom: 6px; }
+.pillar p { font-size: 12px; color: var(--muted); line-height: 1.6; }
+
+/* ═══ ZIGZAG FLOW ═══ */
+.zigzag-flow {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0;
+  width: 100%;
+  max-width: 880px;
+  position: relative;
+}
+.zigzag-step { padding: 16px; text-align: center; position: relative; }
+.zigzag-step .step-label { font-size: 13px; font-weight: 600; color: #fff; margin-bottom: 4px; }
+.zigzag-step .step-desc { font-size: 11px; color: var(--muted); line-height: 1.4; }
+.zigzag-step .step-icon { margin: 0 auto 8px; }
+.cre-num { font-family: 'Clash Display', sans-serif; font-size: 11px; font-weight: 600; color: var(--purple-light); margin-bottom: 8px; }
+
+/* ═══ ARCHITECTURE ═══ */
+.arch-layers {
+  display: flex; flex-direction: column; gap: 0;
+  width: 100%; max-width: 1060px; position: relative;
+}
+.arch-layer {
+  display: flex; align-items: center; justify-content: center;
+  gap: 20px; padding: 16px 0; position: relative;
+}
+.arch-node {
+  background: var(--bg-card); border: 1px solid var(--border); border-radius: 14px;
+  padding: 20px; text-align: center; position: relative; overflow: hidden;
+  min-width: 130px; flex: 1; max-width: 220px;
+}
+.arch-node::before {
+  content: ''; position: absolute; top: 0; left: 20%; right: 20%; height: 1px;
+  background: linear-gradient(90deg, transparent, var(--purple-glow), transparent);
+}
+.arch-node h3 { font-size: 14px; color: #fff; margin-bottom: 3px; }
+.arch-node .arch-chain { font-size: 10px; color: var(--muted); margin-bottom: 10px; }
+.arch-node .node-icon { margin-bottom: 8px; }
+.arch-node p { font-size: 11px; color: var(--muted); line-height: 1.5; margin-top: 6px; }
+
+/* Flow lines */
+.arch-flow-line {
+  display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 6px 0;
+}
+.arch-flow-line .flow-pipe {
+  width: 2px; height: 28px;
+  background: linear-gradient(180deg, var(--purple), var(--purple-light));
+  border-radius: 1px; position: relative;
+}
+.arch-flow-line .flow-pipe::after {
+  content: ''; position: absolute; bottom: -5px; left: 50%; transform: translateX(-50%);
+  width: 0; height: 0;
+  border-left: 5px solid transparent; border-right: 5px solid transparent;
+  border-top: 6px solid var(--purple-light);
+}
+.arch-flow-line span { font-size: 9px; color: var(--muted); letter-spacing: 0.05em; text-transform: uppercase; }
+
+/* Horizontal connector */
+.arch-h-connector {
+  display: flex; align-items: center; gap: 4px; padding: 0 8px; flex-shrink: 0;
+}
+.arch-h-connector .h-line {
+  width: 48px; height: 2px;
+  background: linear-gradient(90deg, var(--purple), var(--purple-light));
+  border-radius: 1px; position: relative;
+}
+.arch-h-connector .h-line::after {
+  content: ''; position: absolute; right: -4px; top: -3px;
+  width: 0; height: 0;
+  border-left: 6px solid var(--purple-light); border-top: 4px solid transparent; border-bottom: 4px solid transparent;
+}
+
+/* ═══ GUARDIAN FLOW ═══ */
+.guardian-flow {
+  display: flex; align-items: stretch; gap: 0;
+  width: 100%; max-width: 900px;
+}
+.guardian-check {
+  flex: 1; padding: 14px 10px; text-align: center;
+  display: flex; flex-direction: column; align-items: center;
+}
+.guardian-check .check-avatar {
+  width: 44px; height: 44px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  margin-bottom: 10px; position: relative;
+}
+.guardian-check .check-avatar::after {
+  content: ''; position: absolute; inset: -3px; border-radius: 50%;
+  border: 1px solid rgba(255,255,255,0.08);
+}
+.guardian-check h3 { font-size: 12px; color: #fff; margin-bottom: 2px; }
+.guardian-check .check-desc { font-size: 10px; color: var(--muted); line-height: 1.4; }
+.guardian-check .check-weight { font-size: 9px; color: var(--muted); margin-top: 6px; text-transform: uppercase; letter-spacing: 0.08em; }
+
+.guardian-arrow {
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; width: 24px; position: relative;
+}
+.guardian-arrow .g-line {
+  width: 100%; height: 2px;
+  background: rgba(255,255,255,0.15); position: relative;
+}
+.guardian-arrow .g-line::after {
+  content: ''; position: absolute; right: -1px; top: -3px;
+  width: 0; height: 0;
+  border-left: 6px solid rgba(255,255,255,0.2); border-top: 4px solid transparent; border-bottom: 4px solid transparent;
+}
+
+/* Verdict output */
+.verdict-box {
+  width: 100%; max-width: 900px; margin-top: 14px;
+  padding: 12px 16px; border-radius: 10px;
+  background: rgba(139,92,246,0.06); border: 1px solid rgba(139,92,246,0.15);
+  display: flex; align-items: center; justify-content: center; gap: 16px;
+}
+.verdict-box .v-label { font-size: 9px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; }
+.verdict-box .v-result { font-size: 13px; font-weight: 700; font-family: 'Clash Display', sans-serif; }
+
+/* ═══ TIER TABLE ═══ */
+.tier-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; width: 100%; max-width: 880px; }
+.tier-card { padding: 20px; text-align: center; }
+.tier-card .tier-icon { width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 12px; font-size: 20px; }
+.tier-card h3 { font-size: 15px; color: #fff; margin-bottom: 8px; }
+.tier-card .tier-stat { font-size: 11px; color: var(--muted); padding: 4px 0; border-top: 1px solid rgba(255,255,255,0.04); }
+.tier-card .tier-stat:first-of-type { border-top: none; margin-top: 8px; }
+.tier-card .tier-val { color: var(--muted-strong); font-weight: 500; }
+
+/* ═══ TECH STACK ═══ */
+.tech-grid { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; max-width: 820px; }
+.tech-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 12px 20px; border-radius: 12px;
+  background: var(--bg-card); border: 1px solid var(--border);
+  font-size: 13px; font-weight: 500; color: var(--muted-strong);
+  transition: border-color 0.2s;
+}
+.tech-item:hover { border-color: var(--border-hover); }
+.tech-item img { width: 22px; height: 22px; flex-shrink: 0; }
+.tech-item svg { width: 22px; height: 22px; flex-shrink: 0; }
+
+/* ═══ PHONE MOCK ═══ */
+.phone-frame {
+  width: 260px; height: 480px;
+  background: var(--bg-card); border: 2px solid var(--border); border-radius: 32px;
+  position: relative; overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+}
+.phone-notch {
+  width: 120px; height: 24px; background: var(--bg);
+  border-radius: 0 0 16px 16px; margin: 0 auto;
+  position: relative; z-index: 2;
+}
+.phone-screen { padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+.phone-screen .ps-header { font-size: 14px; font-weight: 600; color: #fff; text-align: center; margin-bottom: 4px; }
+
+/* NFC pulse animation */
+.nfc-pulse {
+  width: 80px; height: 80px; border-radius: 50%;
+  background: rgba(139,92,246,0.1); border: 2px solid rgba(139,92,246,0.3);
+  display: flex; align-items: center; justify-content: center;
+  margin: 16px auto;
+  position: relative;
+  animation: nfcPulse 2s ease-in-out infinite;
+}
+.nfc-pulse::before, .nfc-pulse::after {
+  content: ''; position: absolute; border-radius: 50%;
+  border: 1px solid rgba(139,92,246,0.2);
+}
+.nfc-pulse::before { inset: -12px; animation: nfcRing 2s ease-out infinite; }
+.nfc-pulse::after { inset: -24px; animation: nfcRing 2s ease-out infinite 0.4s; }
+@keyframes nfcPulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
+@keyframes nfcRing { 0% { opacity: 0.6; transform: scale(0.8); } 100% { opacity: 0; transform: scale(1.3); } }
+
+/* ═══ LINKS ═══ */
+.links-row { display: flex; gap: 12px; margin-top: 24px; }
+.link-btn { display: inline-flex; align-items: center; gap: 8px; padding: 10px 24px; border-radius: 10px; font-size: 13px; font-weight: 500; text-decoration: none; transition: all 0.2s; }
+.link-btn.primary { background: var(--purple); color: #fff; }
+.link-btn.primary:hover { background: #7c4fe0; box-shadow: 0 4px 20px var(--purple-glow); }
+.link-btn.secondary { background: rgba(255,255,255,0.04); border: 1px solid var(--border); color: var(--muted-strong); }
+.link-btn.secondary:hover { border-color: var(--border-hover); color: #fff; }
+
+/* ═══ FEATURE CARDS ═══ */
+.feature-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; width: 100%; max-width: 940px; }
+.feature-grid .card:nth-child(4),
+.feature-grid .card:nth-child(5) { grid-column: span 1; }
+.feature-card { padding: 22px; }
+.feature-card h3 { font-size: 14px; color: #fff; margin-bottom: 4px; }
+.feature-card p { font-size: 11px; color: var(--muted); line-height: 1.5; }
+
+/* Second row spans */
+.feature-grid-row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; width: 100%; max-width: 940px; margin-top: 14px; }
+
+/* ═══ RESPONSIVE ═══ */
+@media (max-width: 768px) {
+  .slide { padding: 24px 20px; }
+  .notes-bar { height: 60px; padding: 0 24px; }
+  .notes-text { font-size: 12px; }
+  .grid-3 { grid-template-columns: 1fr; }
+  .grid-5 { grid-template-columns: repeat(2, 1fr); }
+  .pain-grid { grid-template-columns: 1fr; }
+  .zigzag-flow { grid-template-columns: 1fr; }
+  .guardian-flow { flex-direction: column; }
+  .guardian-arrow { width: auto; height: 24px; transform: rotate(90deg); }
+  .tier-grid { grid-template-columns: repeat(2, 1fr); }
+  .feature-grid { grid-template-columns: 1fr; }
+  .feature-grid-row2 { grid-template-columns: 1fr; }
+  .arch-layer { flex-direction: column; }
+  .arch-h-connector { transform: rotate(90deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+}
+</style>
+</head>
+<body>
+
+<div class="bg-orbs">
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+  <div class="orb orb-3"></div>
+</div>
+
+<div class="progress-bar" id="progress"></div>
+
+<div class="slide-counter">
+  <span class="current" id="currentSlide">1</span>
+  <span>/</span>
+  <span id="totalSlides">11</span>
+</div>
+
+<div class="nav-hint">
+  <kbd>&larr;</kbd><kbd>&rarr;</kbd> navigate
+</div>
+
+<div class="deck-wrapper">
+<div class="deck" id="deck">
+
+  <!-- ═══ SLIDE 1: TITLE ═══ -->
+  <section class="slide active" data-slide="0" data-notes="PhasmaPay turns any NFC-enabled phone into a payment terminal for USDC on Solana. One tap to read a wallet address, AI risk analysis before confirmation, vault signing with no wallet popup. Built for <strong>Solana Seeker</strong>." aria-label="Slide 1 of 11">
+    <div class="badge stagger" style="margin-bottom: 32px;">
+      <span class="badge-dot"></span>
+      <span>MONOLITH &mdash; Solana Mobile Hackathon</span>
+    </div>
+    <img src="./assets/icon.png" alt="PhasmaPay" class="title-logo stagger" style="border-radius: 20px;">
+    <h1 class="title-name stagger">PhasmaPay</h1>
+    <p class="title-tagline stagger">NFC Tap-to-Pay for USDC on Solana Seeker</p>
+    <div class="badge-row stagger">
+      <span class="badge"><img src="https://cdn.simpleicons.org/solana/9945FF" alt="Solana" style="width:18px;height:18px;">Solana Mobile</span>
+      <span class="badge">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--purple-light)" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+        SKR Token
+      </span>
+      <span class="badge">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="2" stroke-linecap="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.93 4.93l2.12 2.12M16.95 16.95l2.12 2.12M2 12h3M19 12h3M4.93 19.07l2.12-2.12M16.95 7.05l2.12-2.12"/></svg>
+        NFC
+      </span>
+      <span class="badge">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2" stroke-linecap="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        AI Guardian
+      </span>
+    </div>
+  </section>
+
+  <!-- ═══ SLIDE 2: PROBLEM ═══ -->
+  <section class="slide slide-below" data-slide="1" data-notes="Crypto payments on mobile are broken. QR codes add 4+ steps of friction. Every transaction requires a wallet popup. Your full transaction history is visible to anyone. And there's zero protection against sending funds to the wrong address." aria-label="Slide 2 of 11">
+    <span class="slide-label stagger">The Problem</span>
+    <h2 class="slide-title stagger">Mobile Crypto Payments<br>Are Broken</h2>
+    <p class="slide-subtitle stagger">$200B+ in mobile crypto volume with a UX worse than cash</p>
+    <div class="pain-grid stagger" style="margin-top: 28px;">
+      <div class="card pain-card stagger">
+        <div class="pain-icon" style="background: rgba(56,189,248,0.1);">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M7 7h.01M7 12h.01M7 17h.01M12 7h.01M12 12h.01M12 17h.01M17 7h.01M17 12h.01"/></svg>
+        </div>
+        <h3>QR Code Friction</h3>
+        <p>Open camera, scan code, verify address, enter amount, confirm &mdash; 4+ steps just to send $5.</p>
+      </div>
+      <div class="card pain-card stagger">
+        <div class="pain-icon" style="background: rgba(245,158,11,0.1);">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--amber)" stroke-width="2" stroke-linecap="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M12 9v4M12 17h.01"/></svg>
+        </div>
+        <h3>Wallet Pop-up Fatigue</h3>
+        <p>Every single transaction needs a manual wallet approval. Buying coffee shouldn't feel like signing a mortgage.</p>
+      </div>
+      <div class="card pain-card stagger">
+        <div class="pain-icon" style="background: rgba(236,72,153,0.1);">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--pink)" stroke-width="2" stroke-linecap="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+        </div>
+        <h3>No Privacy</h3>
+        <p>All transaction history is public. The merchant sees your full wallet, every past payment, and your total balance.</p>
+      </div>
+      <div class="card pain-card stagger">
+        <div class="pain-icon" style="background: rgba(239,68,68,0.1);">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--red)" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M15 9l-6 6M9 9l6 6"/></svg>
+        </div>
+        <h3>No Risk Analysis</h3>
+        <p>Send to the wrong address and funds are gone forever. No warning, no analysis, no safety net.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ SLIDE 3: SOLUTION ═══ -->
+  <section class="slide slide-below" data-slide="2" data-notes="PhasmaPay solves this with three pillars: <strong>NFC tap-to-pay</strong> replaces QR codes with a single tap. <strong>AI Guardian</strong> analyzes every payment before confirmation. <strong>Tap Vault</strong> signs locally with no wallet popup. The result: 1-tap payments with AI safety." aria-label="Slide 3 of 11">
+    <span class="slide-label stagger">The Solution</span>
+    <h2 class="slide-title stagger">Tap. Review. Done.</h2>
+    <p class="slide-subtitle stagger">NFC reads the address. AI analyzes the risk. Vault signs instantly.</p>
+    <div class="grid-3 stagger" style="margin-top: 28px;">
+      <div class="card pillar stagger">
+        <div class="icon-box purple" style="margin: 0 auto 16px;">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#A78BFA" stroke-width="2" stroke-linecap="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.93 4.93l2.12 2.12M16.95 16.95l2.12 2.12M2 12h3M19 12h3"/></svg>
+        </div>
+        <h3>NFC Tap-to-Pay</h3>
+        <p>One tap reads or writes Solana addresses. Phone-to-phone via HCE, or tap any NFC tag. No QR codes.</p>
+      </div>
+      <div class="card pillar stagger">
+        <div class="icon-box green" style="margin: 0 auto 16px;">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2" stroke-linecap="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>
+        </div>
+        <h3>AI Guardian</h3>
+        <p>5-check risk engine + LLM-powered summary before every payment. Green/yellow/red scoring. Auto-approve for trusted tiers.</p>
+      </div>
+      <div class="card pillar stagger">
+        <div class="icon-box cyan" style="margin: 0 auto 16px;">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2" stroke-linecap="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+        </div>
+        <h3>Tap Vault</h3>
+        <p>Pre-loaded local keypair stored in secure enclave. Payments sign locally &mdash; no MWA popup, sub-second confirmation.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ SLIDE 4: HOW IT WORKS ═══ -->
+  <section class="slide slide-below" data-slide="3" data-notes="Walk through the 6-step flow: <strong>NFC Tap</strong> reads the recipient address, <strong>Jupiter</strong> optimizes the route (swap vs direct), <strong>Guardian</strong> runs 5 risk checks + LLM summary, user <strong>reviews</strong> the risk score, <strong>signs</strong> via vault (instant) or MWA (wallet popup), then USDC is <strong>transferred</strong> on-chain." aria-label="Slide 4 of 11">
+    <span class="slide-label stagger">How It Works</span>
+    <h2 class="slide-title stagger" style="font-size: clamp(26px, 3.2vw, 38px);">End-to-End Payment Flow</h2>
+    <div class="zigzag-flow stagger" style="margin-top: 32px;">
+      <div class="card zigzag-step stagger" style="padding: 18px 14px;">
+        <div class="cre-num">01</div>
+        <div class="step-icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--purple-light)" stroke-width="1.5" stroke-linecap="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3"/></svg>
+        </div>
+        <div class="step-label">NFC Tap</div>
+        <div class="step-desc">Read wallet address from NFC tag or phone-to-phone HCE</div>
+      </div>
+      <div class="card zigzag-step stagger" style="padding: 18px 14px;">
+        <div class="cre-num">02</div>
+        <div class="step-icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="1.5" stroke-linecap="round"><path d="M16 3h5v5M4 20L21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/></svg>
+        </div>
+        <div class="step-label">Route Optimize</div>
+        <div class="step-desc">Jupiter v6 evaluates swap vs. direct USDC transfer</div>
+      </div>
+      <div class="card zigzag-step stagger" style="padding: 18px 14px;">
+        <div class="cre-num">03</div>
+        <div class="step-icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="1.5" stroke-linecap="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>
+        </div>
+        <div class="step-label">Guardian Analysis</div>
+        <div class="step-desc">5 on-chain checks + LLM-powered risk summary</div>
+      </div>
+      <div class="card zigzag-step stagger" style="padding: 18px 14px;">
+        <div class="cre-num">04</div>
+        <div class="step-icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--amber)" stroke-width="1.5" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+        </div>
+        <div class="step-label">Risk Review</div>
+        <div class="step-desc">Green / yellow / red score with plain-English explanation</div>
+      </div>
+      <div class="card zigzag-step stagger" style="padding: 18px 14px;">
+        <div class="cre-num">05</div>
+        <div class="step-icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--purple)" stroke-width="1.5" stroke-linecap="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+        </div>
+        <div class="step-label">Sign</div>
+        <div class="step-desc">Vault signs locally (instant) or MWA wallet approval</div>
+      </div>
+      <div class="card zigzag-step stagger" style="padding: 18px 14px;">
+        <div class="cre-num">06</div>
+        <div class="step-icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="1.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>
+        <div class="step-label">USDC Transferred</div>
+        <div class="step-desc">On-chain confirmation in under 2 seconds on Solana</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ SLIDE 5: ARCHITECTURE ═══ -->
+  <section class="slide slide-below" data-slide="4" data-notes="Three-layer architecture. <strong>PhasmaPay App</strong> is an Expo bare workflow Android app. Four core modules: NFC Manager, Tap Vault, AI Guardian, and SKR/Cashback. Service layer handles escrow and payment logic. Everything talks to <strong>Solana Devnet</strong> via Helius RPC, where our Anchor program and SKR token live. Solana Actions endpoint enables Blink-based claiming." aria-label="Slide 5 of 11">
+    <span class="slide-label stagger">Architecture</span>
+    <h2 class="slide-title stagger" style="font-size: clamp(26px, 3.2vw, 38px);">System Design</h2>
+    <div class="arch-layers stagger" style="margin-top: 24px;">
+      <!-- Layer 1: App -->
+      <div class="arch-layer stagger">
+        <div class="arch-node" style="border-color: rgba(139,92,246,0.25); max-width: 380px;">
+          <div class="node-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--purple-light)" stroke-width="1.5" stroke-linecap="round"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M12 18h.01"/></svg>
+          </div>
+          <h3>PhasmaPay App</h3>
+          <div class="arch-chain">Expo &middot; React Native &middot; Android</div>
+          <p>Bare workflow mobile app with NFC, vault signing, AI risk analysis, and SKR loyalty</p>
+        </div>
+      </div>
+
+      <div class="arch-flow-line stagger">
+        <span>modules</span>
+        <div class="flow-pipe"></div>
+      </div>
+
+      <!-- Layer 2: Core modules -->
+      <div class="arch-layer stagger">
+        <div class="arch-node">
+          <div class="node-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="1.5" stroke-linecap="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>
+          </div>
+          <h3>NFC Manager</h3>
+          <div class="arch-chain">Read &middot; Write &middot; HCE</div>
+        </div>
+        <div class="arch-node">
+          <div class="node-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--purple-light)" stroke-width="1.5" stroke-linecap="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+          </div>
+          <h3>Tap Vault</h3>
+          <div class="arch-chain">Local KP &middot; Daily Limits</div>
+        </div>
+        <div class="arch-node">
+          <div class="node-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="1.5" stroke-linecap="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          </div>
+          <h3>AI Guardian</h3>
+          <div class="arch-chain">Risk Engine &middot; LLM</div>
+        </div>
+        <div class="arch-node">
+          <div class="node-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--amber)" stroke-width="1.5" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+          </div>
+          <h3>SKR / Cashback</h3>
+          <div class="arch-chain">Tiers &middot; Rewards</div>
+        </div>
+        <div class="arch-node">
+          <div class="node-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="1.5" stroke-linecap="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+          </div>
+          <h3>Yield Vault</h3>
+          <div class="arch-chain">Kamino &middot; Auto-compound</div>
+        </div>
+      </div>
+
+      <div class="arch-flow-line stagger">
+        <span>services</span>
+        <div class="flow-pipe"></div>
+      </div>
+
+      <!-- Layer 3: Services + On-chain -->
+      <div class="arch-layer stagger">
+        <div class="arch-node" style="max-width: 320px;">
+          <div class="node-icon"><img src="https://cdn.simpleicons.org/solana/9945FF" alt="Solana" width="24" height="24"></div>
+          <h3>Solana Devnet</h3>
+          <div class="arch-chain">Helius RPC &middot; Anchor 0.31</div>
+          <p>phasma_escrow program + SKR SPL token + USDC transfers</p>
+        </div>
+
+        <div class="arch-h-connector stagger">
+          <div class="h-line"></div>
+        </div>
+
+        <div class="arch-node" style="max-width: 260px; border-color: rgba(255,255,255,0.04);">
+          <div class="node-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--muted-strong)" stroke-width="1.5" stroke-linecap="round"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
+          </div>
+          <h3>Solana Actions</h3>
+          <div class="arch-chain">Blinks &middot; dial.to</div>
+          <p>Ghost escrow claims via any Blink-compatible client</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ SLIDE 6: KEY FEATURES ═══ -->
+  <section class="slide slide-below" data-slide="5" data-notes="Deep dive into 5 key features: <strong>Ghost Mode</strong> for private payments via escrow PDAs, <strong>SKR Tiers</strong> for loyalty and progressive benefits, <strong>Yield</strong> on idle USDC via Kamino lending, <strong>AI Route Optimization</strong> via Jupiter, and <strong>Solana Actions/Blinks</strong> for cross-client claiming." aria-label="Slide 6 of 11">
+    <span class="slide-label stagger">Key Features</span>
+    <h2 class="slide-title stagger" style="font-size: clamp(26px, 3.2vw, 38px);">Feature Deep Dive</h2>
+    <div class="feature-grid stagger" style="margin-top: 24px;">
+      <div class="card feature-card stagger">
+        <div class="icon-box pink" style="margin-bottom: 12px;">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ec4899" stroke-width="2" stroke-linecap="round">
+            <path d="M12 4C8 4 4 8 4 14v4c0 1 .5 2 1.5 2s1.5-1 2-2 1-2 2-2 1.5 1 2 2 1 2 2 2 1.5-1 2-2 1-2 2-2 1.5 1 2 2 1 2 1.5 2 1.5-1 1.5-2v-4c0-6-4-10-8-10z"/>
+            <circle cx="10" cy="12" r="1.5" fill="#ec4899"/>
+            <circle cx="14" cy="12" r="1.5" fill="#ec4899"/>
+          </svg>
+        </div>
+        <h3>Ghost Mode</h3>
+        <p>Privacy via fresh escrow PDA per payment. Recipient's wallet never appears in sender's history. Claim via any Blink client.</p>
+      </div>
+      <div class="card feature-card stagger">
+        <div class="icon-box purple" style="margin-bottom: 12px;">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#A78BFA" stroke-width="2" stroke-linecap="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+        </div>
+        <h3>SKR Tiers</h3>
+        <p>Ghost / Bronze / Silver / Gold. Higher tiers unlock bigger vault limits, better cashback, and auto-approve on green risk.</p>
+      </div>
+      <div class="card feature-card stagger">
+        <div class="icon-box green" style="margin-bottom: 12px;">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2" stroke-linecap="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+        </div>
+        <h3>Yield Vault</h3>
+        <p>Idle USDC (vault + unclaimed ghost) earns ~7% APY via Kamino lending. Shared PDA vault &mdash; no per-user rent. Yield funds SKR cashback, making the entire system self-sustaining.</p>
+      </div>
+    </div>
+    <div class="feature-grid-row2 stagger">
+      <div class="card feature-card stagger">
+        <div class="icon-box cyan" style="margin-bottom: 12px;">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2" stroke-linecap="round"><path d="M16 3h5v5M4 20L21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/></svg>
+        </div>
+        <h3>AI Route Optimization</h3>
+        <p>Before signing, an agent evaluates Jupiter swap vs. direct USDC transfer and picks the cheaper path automatically.</p>
+      </div>
+      <div class="card feature-card stagger">
+        <div class="icon-box amber" style="margin-bottom: 12px;">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
+        </div>
+        <h3>Solana Actions / Blinks</h3>
+        <p>Full Actions spec v2.1.3. Ghost recipients claim from dial.to, Phantom, or Backpack &mdash; no PhasmaPay install needed.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ SLIDE 7: AI GUARDIAN ═══ -->
+  <section class="slide slide-below" data-slide="6" data-notes="The AI Guardian runs 5 sequential on-chain checks: <strong>account exists</strong>, <strong>transaction history</strong>, <strong>account age</strong>, <strong>known recipient</strong>, and <strong>amount anomaly</strong>. Each check is weighted and combined into a score 0-100. Results feed into an LLM that generates a plain-English risk summary. Green (≥70) is safe, yellow (40-70) is caution, red (<40) is danger. Gold SKR tier + green = auto-approve with no confirmation needed." aria-label="Slide 7 of 11">
+    <span class="slide-label stagger">AI Integration</span>
+    <h2 class="slide-title stagger" style="font-size: clamp(26px, 3.2vw, 38px);">AI Guardian Risk Engine</h2>
+    <p class="slide-subtitle stagger">5 sequential checks + LLM summary before every payment</p>
+
+    <div class="guardian-flow stagger" style="margin-top: 20px;">
+      <div class="card guardian-check stagger">
+        <div class="check-avatar" style="background: rgba(139,92,246,0.15); border: 1px solid rgba(139,92,246,0.3);">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#A78BFA" stroke-width="2" stroke-linecap="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        </div>
+        <h3>Account Exists</h3>
+        <div class="check-desc">Verify recipient has an on-chain account</div>
+        <div class="check-weight">Weight: 25%</div>
+      </div>
+
+      <div class="guardian-arrow stagger"><div class="g-line"></div></div>
+
+      <div class="card guardian-check stagger">
+        <div class="check-avatar" style="background: rgba(56,189,248,0.15); border: 1px solid rgba(56,189,248,0.3);">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/></svg>
+        </div>
+        <h3>Tx History</h3>
+        <div class="check-desc">Has the recipient transacted before?</div>
+        <div class="check-weight">Weight: 20%</div>
+      </div>
+
+      <div class="guardian-arrow stagger"><div class="g-line"></div></div>
+
+      <div class="card guardian-check stagger">
+        <div class="check-avatar" style="background: rgba(245,158,11,0.15); border: 1px solid rgba(245,158,11,0.3);">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+        </div>
+        <h3>Account Age</h3>
+        <div class="check-desc">How old is the recipient account?</div>
+        <div class="check-weight">Weight: 20%</div>
+      </div>
+
+      <div class="guardian-arrow stagger"><div class="g-line"></div></div>
+
+      <div class="card guardian-check stagger">
+        <div class="check-avatar" style="background: rgba(74,222,128,0.15); border: 1px solid rgba(74,222,128,0.3);">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2" stroke-linecap="round"><path d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
+        </div>
+        <h3>Known Recipient</h3>
+        <div class="check-desc">Have you paid this address before?</div>
+        <div class="check-weight">Weight: 20%</div>
+      </div>
+
+      <div class="guardian-arrow stagger"><div class="g-line"></div></div>
+
+      <div class="card guardian-check stagger">
+        <div class="check-avatar" style="background: rgba(239,68,68,0.15); border: 1px solid rgba(239,68,68,0.3);">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2" stroke-linecap="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><path d="M12 9v4M12 17h.01"/></svg>
+        </div>
+        <h3>Amount Anomaly</h3>
+        <div class="check-desc">Is this amount unusual for you?</div>
+        <div class="check-weight">Weight: 15%</div>
+      </div>
+    </div>
+
+    <div class="verdict-box stagger">
+      <div>
+        <div class="v-label">Score</div>
+        <div class="v-result" style="color: #fff;">0 &ndash; 100</div>
+      </div>
+      <div style="width: 1px; height: 28px; background: var(--border);"></div>
+      <div>
+        <div class="v-label">Outcomes</div>
+        <div style="display: flex; gap: 12px; margin-top: 2px;">
+          <span style="font-size: 12px; font-weight: 600; color: var(--green);">&ge;70 Safe</span>
+          <span style="font-size: 12px; font-weight: 600; color: var(--amber);">40-70 Caution</span>
+          <span style="font-size: 12px; font-weight: 600; color: var(--red);">&lt;40 Danger</span>
+        </div>
+      </div>
+      <div style="width: 1px; height: 28px; background: var(--border);"></div>
+      <div>
+        <div class="v-label">Auto-Approve</div>
+        <div style="font-size: 12px; color: var(--muted-strong); margin-top: 2px;">
+          <strong style="color: var(--purple-light);">Gold SKR</strong> + Green &rarr; skip confirmation
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ SLIDE 8: SKR TOKEN ECONOMY ═══ -->
+  <section class="slide slide-below" data-slide="7" data-notes="SKR is a real SPL token on devnet. Four tiers based on balance: <strong>Ghost</strong> (0 SKR), <strong>Bronze</strong> (10+), <strong>Silver</strong> (100+), <strong>Gold</strong> (1000+). Higher tiers unlock better cashback rates, higher daily vault limits, and Gold tier gets auto-approve on green risk scores — completely skipping the confirmation step." aria-label="Slide 8 of 11">
+    <span class="slide-label stagger">Token Economy</span>
+    <h2 class="slide-title stagger" style="font-size: clamp(26px, 3.2vw, 38px);">SKR Tier System</h2>
+    <p class="slide-subtitle stagger">Real SPL token on devnet &mdash; earn through payments, unlock progressive benefits</p>
+    <div class="tier-grid stagger" style="margin-top: 28px;">
+      <div class="card tier-card stagger">
+        <div class="tier-icon" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2" stroke-linecap="round">
+            <path d="M12 4C8 4 4 8 4 14v4c0 1 .5 2 1.5 2s1.5-1 2-2 1-2 2-2 1.5 1 2 2 1 2 2 2 1.5-1 2-2 1-2 2-2 1.5 1 2 2 1 2 1.5 2 1.5-1 1.5-2v-4c0-6-4-10-8-10z"/>
+          </svg>
+        </div>
+        <h3 style="color: var(--muted-strong);">Ghost</h3>
+        <div class="tier-stat">SKR: <span class="tier-val">0</span></div>
+        <div class="tier-stat">Cashback: <span class="tier-val">0.5%</span></div>
+        <div class="tier-stat">Vault: <span class="tier-val">$10/day</span></div>
+        <div class="tier-stat">Guardian: <span class="tier-val">Manual</span></div>
+      </div>
+      <div class="card tier-card stagger">
+        <div class="tier-icon" style="background: rgba(205,127,50,0.1); border: 1px solid rgba(205,127,50,0.3);">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#CD7F32" stroke-width="2" stroke-linecap="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+        </div>
+        <h3 style="color: #CD7F32;">Bronze</h3>
+        <div class="tier-stat">SKR: <span class="tier-val">10+</span></div>
+        <div class="tier-stat">Cashback: <span class="tier-val">1%</span></div>
+        <div class="tier-stat">Vault: <span class="tier-val">$25/day</span></div>
+        <div class="tier-stat">Guardian: <span class="tier-val">Manual</span></div>
+      </div>
+      <div class="card tier-card stagger">
+        <div class="tier-icon" style="background: rgba(192,192,192,0.1); border: 1px solid rgba(192,192,192,0.3);">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#C0C0C0" stroke-width="2" stroke-linecap="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+        </div>
+        <h3 style="color: #C0C0C0;">Silver</h3>
+        <div class="tier-stat">SKR: <span class="tier-val">100+</span></div>
+        <div class="tier-stat">Cashback: <span class="tier-val">2%</span></div>
+        <div class="tier-stat">Vault: <span class="tier-val">$100/day</span></div>
+        <div class="tier-stat">Guardian: <span class="tier-val">Manual</span></div>
+      </div>
+      <div class="card tier-card stagger">
+        <div class="tier-icon" style="background: rgba(255,215,0,0.1); border: 1px solid rgba(255,215,0,0.3);">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#FFD700" stroke-width="2" stroke-linecap="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+        </div>
+        <h3 style="color: #FFD700;">Gold</h3>
+        <div class="tier-stat">SKR: <span class="tier-val">1000+</span></div>
+        <div class="tier-stat">Cashback: <span class="tier-val">3%</span></div>
+        <div class="tier-stat">Vault: <span class="tier-val">$500/day</span></div>
+        <div class="tier-stat">Guardian: <span class="tier-val" style="color: var(--green);">Auto-approve</span></div>
+      </div>
+    </div>
+    <div class="card stagger" style="margin-top: 16px; padding: 12px 24px; max-width: 600px; text-align: center;">
+      <p style="font-size: 12px; color: var(--muted-strong);">
+        <strong style="color: var(--purple-light);">Token Mint:</strong> <code style="font-size: 11px; color: var(--muted);">AD4ereCFKqgRCp77sU5q771oeNrrisxaEbqG9Ni9foyS</code>
+      </p>
+    </div>
+  </section>
+
+  <!-- ═══ SLIDE 9: LIVE DEMO ═══ -->
+  <section class="slide slide-below" data-slide="8" data-notes="Everything works on real hardware: <strong>Oppo Reno 14 Pro</strong> as the primary device with NFC, <strong>Poco X3</strong> for merchant testing. Download the APK, install on any Android with NFC + Phantom, and you can tap-to-pay on Solana devnet right now. Demo video shows the full flow end-to-end." aria-label="Slide 9 of 11">
+    <span class="slide-label stagger">Live Demo</span>
+    <h2 class="slide-title stagger" style="font-size: clamp(26px, 3.2vw, 38px);">Working on Real Hardware</h2>
+    <div class="grid-2 stagger" style="margin-top: 24px; max-width: 900px;">
+      <!-- Phone mockup -->
+      <div class="stagger" style="display: flex; justify-content: center;">
+        <div class="phone-frame">
+          <div class="phone-notch"></div>
+          <div class="phone-screen">
+            <div class="ps-header">PhasmaPay</div>
+            <div class="nfc-pulse">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--purple-light)" stroke-width="2" stroke-linecap="round">
+                <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7S2 12 2 12z"/>
+                <circle cx="12" cy="12" r="3"/>
+              </svg>
+            </div>
+            <div style="text-align: center; font-size: 12px; color: var(--muted);">Tap to Pay</div>
+            <div style="background: rgba(74,222,128,0.1); border: 1px solid rgba(74,222,128,0.2); border-radius: 8px; padding: 8px 12px; margin-top: 8px;">
+              <div style="font-size: 10px; color: var(--green); font-weight: 600;">GUARDIAN: SAFE (82)</div>
+              <div style="font-size: 9px; color: var(--muted); margin-top: 2px;">Known recipient, normal amount</div>
+            </div>
+            <div style="background: var(--purple); border-radius: 10px; padding: 10px; text-align: center; margin-top: 8px; font-size: 13px; font-weight: 600; color: #fff;">Send $5.00 USDC</div>
+            <div style="text-align: center; margin-top: 6px;">
+              <div style="font-size: 10px; color: var(--muted);">Via Tap Vault &middot; No popup</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- Demo flow + links -->
+      <div style="display: flex; flex-direction: column; gap: 12px;">
+        <div class="card stagger" style="padding: 16px;">
+          <div style="font-size: 13px; font-weight: 600; color: #fff; margin-bottom: 8px;">Demo Flow</div>
+          <div style="display: flex; flex-direction: column; gap: 6px;">
+            <div style="font-size: 12px; color: var(--muted-strong); display: flex; gap: 8px;"><span style="color: var(--purple-light);">1.</span> Tap NFC tag or phone-to-phone</div>
+            <div style="font-size: 12px; color: var(--muted-strong); display: flex; gap: 8px;"><span style="color: var(--purple-light);">2.</span> Guardian analyzes recipient</div>
+            <div style="font-size: 12px; color: var(--muted-strong); display: flex; gap: 8px;"><span style="color: var(--purple-light);">3.</span> Review risk score + explanation</div>
+            <div style="font-size: 12px; color: var(--muted-strong); display: flex; gap: 8px;"><span style="color: var(--purple-light);">4.</span> Confirm (or auto-approve for Gold)</div>
+            <div style="font-size: 12px; color: var(--muted-strong); display: flex; gap: 8px;"><span style="color: var(--purple-light);">5.</span> USDC received in under 2 seconds</div>
+          </div>
+        </div>
+        <div class="card stagger" style="padding: 16px; border-color: rgba(139,92,246,0.15);">
+          <div style="font-size: 13px; font-weight: 600; color: #fff; margin-bottom: 4px; display: flex; align-items: center; gap: 8px;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--purple-light)" stroke-width="2" stroke-linecap="round"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M12 18h.01"/></svg>
+            Test Devices
+          </div>
+          <div style="font-size: 12px; color: var(--muted); line-height: 1.6;">Oppo Reno 14 Pro (primary, USB debug)<br>Poco X3 (merchant, APK transfer)</div>
+        </div>
+        <div class="card stagger" style="padding: 16px;">
+          <div style="font-size: 13px; font-weight: 600; color: #fff; margin-bottom: 4px; display: flex; align-items: center; gap: 8px;">
+            <img src="https://cdn.simpleicons.org/phantom/AB9FF2" alt="Phantom" width="16" height="16">
+            Requirements
+          </div>
+          <div style="font-size: 12px; color: var(--muted);">Android device with NFC + Phantom wallet. Devnet SOL + USDC.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ SLIDE 10: TECH STACK ═══ -->
+  <section class="slide slide-below" data-slide="9" data-notes="Full-stack Solana mobile project: Anchor 0.31 on-chain program, React Native + Expo bare workflow, MWA v2 for Phantom integration, native NFC with HCE support, Jupiter v6 for route optimization, Solana Actions v2.1.3 for Blink compatibility, and Helius RPC for reliable devnet access. 1 on-chain program, 7+ services." aria-label="Slide 10 of 11">
+    <span class="slide-label stagger">Tech Stack</span>
+    <h2 class="slide-title stagger" style="font-size: clamp(26px, 3.2vw, 38px);">Built With</h2>
+    <div class="tech-grid stagger" style="margin-top: 28px;">
+      <div class="tech-item stagger"><img src="https://cdn.simpleicons.org/solana/9945FF" alt="Solana">Anchor 0.31 (Rust)</div>
+      <div class="tech-item stagger"><img src="https://cdn.simpleicons.org/react/61DAFB" alt="React Native">React Native + Expo</div>
+      <div class="tech-item stagger"><img src="https://cdn.simpleicons.org/phantom/AB9FF2" alt="Phantom">MWA v2 (Phantom)</div>
+      <div class="tech-item stagger">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="1.5" stroke-linecap="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3"/></svg>
+        react-native-nfc-manager
+      </div>
+      <div class="tech-item stagger">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--purple-light)" stroke-width="1.5" stroke-linecap="round"><path d="M16 3h5v5M4 20L21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/></svg>
+        Jupiter v6
+      </div>
+      <div class="tech-item stagger">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--amber)" stroke-width="1.5" stroke-linecap="round"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
+        Solana Actions v2.1.3
+      </div>
+      <div class="tech-item stagger">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="1.5" stroke-linecap="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>
+        AI Guardian (LLM)
+      </div>
+      <div class="tech-item stagger">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--pink)" stroke-width="1.5" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+        SKR SPL Token
+      </div>
+      <div class="tech-item stagger">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="1.5" stroke-linecap="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+        Yield Vault (Kamino)
+      </div>
+      <div class="tech-item stagger">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--muted-strong)" stroke-width="1.5" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+        Torque SDK
+      </div>
+      <div class="tech-item stagger">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="1.5" stroke-linecap="round"><path d="M21 12V7H5a2 2 0 010-4h14v4"/><path d="M3 5v14a2 2 0 002 2h16v-5"/><path d="M18 12a2 2 0 000 4h4v-4z"/></svg>
+        Helius RPC
+      </div>
+    </div>
+    <div class="grid-2 stagger" style="margin-top: 20px; max-width: 520px;">
+      <div class="card stagger" style="padding: 16px; text-align: center;">
+        <div style="font-family: 'Clash Display'; font-size: 28px; font-weight: 700; color: #fff;">1</div>
+        <div style="font-size: 12px; color: var(--muted); margin-top: 2px;">On-chain Program</div>
+      </div>
+      <div class="card stagger" style="padding: 16px; text-align: center;">
+        <div style="font-family: 'Clash Display'; font-size: 28px; font-weight: 700; color: #fff;">8+</div>
+        <div style="font-size: 12px; color: var(--muted); margin-top: 2px;">Services</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ SLIDE 11: THANK YOU ═══ -->
+  <section class="slide slide-below" data-slide="10" data-notes="Thank you! PhasmaPay demonstrates that NFC tap-to-pay with AI risk analysis is a viable payment UX on Solana. One program, 7+ services, working on real hardware. Download the APK and try it now." aria-label="Slide 11 of 11">
+    <img src="./assets/icon.png" alt="PhasmaPay" class="title-logo stagger" style="width: 64px; height: 64px; border-radius: 16px;">
+    <h2 class="title-name stagger" style="font-size: clamp(36px, 5vw, 56px);">PhasmaPay</h2>
+    <p class="slide-subtitle stagger" style="margin-top: 8px;">Tap. Review. Done.</p>
+    <div class="links-row stagger" style="margin-top: 32px;">
+      <a href="https://github.com/phasmapay/app" class="link-btn secondary" target="_blank">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="var(--muted-strong)"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+        GitHub
+      </a>
+      <a href="https://expo.dev/accounts/amrrobb/projects/phasmapay/builds/0294bc37-d728-4e39-831f-0a95ccecbd1d" class="link-btn secondary" target="_blank">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--muted-strong)" stroke-width="2" stroke-linecap="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Download APK
+      </a>
+      <a href="https://drive.google.com/drive/folders/174K8g1-jy9XzaOkPZpDC1APJYDif9bwP?usp=sharing" class="link-btn primary" target="_blank">
+        Demo Video &rarr;
+      </a>
+    </div>
+    <div style="margin-top: 48px; text-align: center;" class="stagger">
+      <div style="font-size: 12px; color: var(--muted); margin-bottom: 8px;">Built for</div>
+      <div style="font-size: 15px; font-weight: 600; color: #fff; display: flex; align-items: center; justify-content: center; gap: 8px;">
+        <img src="https://cdn.simpleicons.org/solana/9945FF" alt="Solana" width="18" height="18">
+        MONOLITH &mdash; Solana Mobile Hackathon
+      </div>
+      <div style="font-size: 12px; color: var(--muted); margin-top: 4px;">March 2026</div>
+    </div>
+  </section>
+
+</div>
+
+<!-- ═══ SPEAKER NOTES BAR ═══ -->
+<div class="notes-bar">
+  <div class="notes-text" id="notesText"></div>
+</div>
+</div>
+
+<script>
+(function() {
+  const slides = document.querySelectorAll('.slide');
+  const total = slides.length;
+  const progress = document.getElementById('progress');
+  const currentEl = document.getElementById('currentSlide');
+  const totalEl = document.getElementById('totalSlides');
+  const notesEl = document.getElementById('notesText');
+  let current = 0;
+  let transitioning = false;
+
+  totalEl.textContent = total;
+
+  function updateNotes(index) {
+    const note = slides[index].getAttribute('data-notes') || '';
+    notesEl.style.opacity = '0';
+    setTimeout(() => {
+      notesEl.innerHTML = note;
+      notesEl.style.opacity = '1';
+    }, 200);
+  }
+
+  function goTo(index) {
+    if (index < 0 || index >= total || index === current || transitioning) return;
+    transitioning = true;
+
+    const goingForward = index > current;
+
+    slides[current].classList.remove('active');
+    slides[current].classList.remove('slide-below', 'slide-above');
+    slides[current].classList.add(goingForward ? 'slide-above' : 'slide-below');
+
+    slides[index].style.transition = 'none';
+    slides[index].classList.remove('slide-above', 'slide-below');
+    slides[index].classList.add(goingForward ? 'slide-below' : 'slide-above');
+
+    slides[index].offsetHeight; // force reflow
+
+    slides[index].style.transition = '';
+    slides[index].classList.remove('slide-below', 'slide-above');
+    slides[index].classList.add('active');
+
+    current = index;
+    currentEl.textContent = current + 1;
+    progress.style.width = ((current + 1) / total * 100) + '%';
+    updateNotes(current);
+
+    setTimeout(() => { transitioning = false; }, 500);
+  }
+
+  // Init
+  updateNotes(0);
+
+  // Keyboard
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') { e.preventDefault(); goTo(current + 1); }
+    else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') { e.preventDefault(); goTo(current - 1); }
+    else if (e.key === 'Home') { e.preventDefault(); goTo(0); }
+    else if (e.key === 'End') { e.preventDefault(); goTo(total - 1); }
+  });
+
+  // Click navigation
+  document.addEventListener('click', (e) => {
+    if (e.target.closest('a')) return;
+    if (e.target.closest('.notes-bar')) return;
+    const x = e.clientX;
+    if (x > window.innerWidth * 0.5) goTo(current + 1);
+    else goTo(current - 1);
+  });
+
+  // Touch swipe
+  let touchStartX = 0;
+  document.addEventListener('touchstart', (e) => { touchStartX = e.touches[0].clientX; });
+  document.addEventListener('touchend', (e) => {
+    const diff = touchStartX - e.changedTouches[0].clientX;
+    if (Math.abs(diff) > 50) { diff > 0 ? goTo(current + 1) : goTo(current - 1); }
+  });
+
+  // Wheel
+  let wheelTimeout;
+  document.addEventListener('wheel', (e) => {
+    e.preventDefault();
+    clearTimeout(wheelTimeout);
+    wheelTimeout = setTimeout(() => {
+      if (e.deltaY > 0) goTo(current + 1);
+      else goTo(current - 1);
+    }, 80);
+  }, { passive: false });
+})();
+</script>
+</body>
+</html>
