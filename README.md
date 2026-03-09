@@ -9,7 +9,7 @@ Built for **MONOLITH** (Solana Mobile) — Top 10 + Best SKR.
 - **APK (Android):** [Install from Expo](https://expo.dev/accounts/amrrobb/projects/phasmapay-monolith/builds/7413a5c4-2a89-470a-ad46-84c4f2aaffad)
 - **Demo Video:** [YouTube](https://www.youtube.com/watch?v=RqnAsqdYJbc)
 - **Pitch Deck:** [Google Drive](https://drive.google.com/drive/folders/11zG8a5vf_NMuXeWS9T7oVZ7ofQP62Xvo)
-- **Source:** [GitHub](https://github.com/phasmapay/app)
+- **Source:** [GitHub](https://github.com/phasmapay/app/tree/feat/monolith-sprint)
 
 ## What It Does
 

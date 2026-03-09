@@ -421,7 +421,7 @@ h1, h2, h3 { font-family: 'Clash Display', 'General Sans', sans-serif; }
 <div class="slide-counter">
   <span class="current" id="currentSlide">1</span>
   <span>/</span>
-  <span id="totalSlides">11</span>
+  <span id="totalSlides">12</span>
 </div>
 
 <div class="nav-hint">
@@ -432,7 +432,7 @@ h1, h2, h3 { font-family: 'Clash Display', 'General Sans', sans-serif; }
 <div class="deck" id="deck">
 
   <!-- ═══ SLIDE 1: TITLE ═══ -->
-  <section class="slide active" data-slide="0" data-notes="PhasmaPay turns any NFC-enabled phone into a payment terminal for USDC on Solana. One tap to read a wallet address, AI risk analysis before confirmation, vault signing with no wallet popup. Built for <strong>Solana Seeker</strong>." aria-label="Slide 1 of 11">
+  <section class="slide active" data-slide="0" data-notes="PhasmaPay turns any NFC-enabled phone into a payment terminal for USDC on Solana. One tap to read a wallet address, AI risk analysis before confirmation, vault signing with no wallet popup. Built for <strong>Solana Seeker</strong>." aria-label="Slide 1 of 12">
     <div class="badge stagger" style="margin-bottom: 32px;">
       <span class="badge-dot"></span>
       <span>MONOLITH &mdash; Solana Mobile Hackathon</span>
@@ -458,7 +458,7 @@ h1, h2, h3 { font-family: 'Clash Display', 'General Sans', sans-serif; }
   </section>
 
   <!-- ═══ SLIDE 2: PROBLEM ═══ -->
-  <section class="slide slide-below" data-slide="1" data-notes="Crypto payments on mobile are broken. QR codes add 4+ steps of friction. Every transaction requires a wallet popup. Your full transaction history is visible to anyone. And there's zero protection against sending funds to the wrong address." aria-label="Slide 2 of 11">
+  <section class="slide slide-below" data-slide="1" data-notes="Crypto payments on mobile are broken. QR codes add 4+ steps of friction. Every transaction requires a wallet popup. Your full transaction history is visible to anyone. And there's zero protection against sending funds to the wrong address." aria-label="Slide 2 of 12">
     <span class="slide-label stagger">The Problem</span>
     <h2 class="slide-title stagger">Mobile Crypto Payments<br>Are Broken</h2>
     <p class="slide-subtitle stagger">$200B+ in mobile crypto volume with a UX worse than cash</p>
@@ -495,7 +495,7 @@ h1, h2, h3 { font-family: 'Clash Display', 'General Sans', sans-serif; }
   </section>
 
   <!-- ═══ SLIDE 3: SOLUTION ═══ -->
-  <section class="slide slide-below" data-slide="2" data-notes="PhasmaPay solves this with three pillars: <strong>NFC tap-to-pay</strong> replaces QR codes with a single tap. <strong>AI Guardian</strong> analyzes every payment before confirmation. <strong>Tap Vault</strong> signs locally with no wallet popup. The result: 1-tap payments with AI safety." aria-label="Slide 3 of 11">
+  <section class="slide slide-below" data-slide="2" data-notes="PhasmaPay solves this with three pillars: <strong>NFC tap-to-pay</strong> replaces QR codes with a single tap. <strong>AI Guardian</strong> analyzes every payment before confirmation. <strong>Tap Vault</strong> signs locally with no wallet popup. The result: 1-tap payments with AI safety." aria-label="Slide 3 of 12">
     <span class="slide-label stagger">The Solution</span>
     <h2 class="slide-title stagger">Tap. Review. Done.</h2>
     <p class="slide-subtitle stagger">NFC reads the address. AI analyzes the risk. Vault signs instantly.</p>
@@ -525,7 +525,7 @@ h1, h2, h3 { font-family: 'Clash Display', 'General Sans', sans-serif; }
   </section>
 
   <!-- ═══ SLIDE 4: HOW IT WORKS ═══ -->
-  <section class="slide slide-below" data-slide="3" data-notes="Walk through the 6-step flow: <strong>NFC Tap</strong> reads the recipient address, <strong>Jupiter</strong> optimizes the route (swap vs direct), <strong>Guardian</strong> runs 5 risk checks + LLM summary, user <strong>reviews</strong> the risk score, <strong>signs</strong> via vault (instant) or MWA (wallet popup), then USDC is <strong>transferred</strong> on-chain." aria-label="Slide 4 of 11">
+  <section class="slide slide-below" data-slide="3" data-notes="Walk through the 6-step flow: <strong>NFC Tap</strong> reads the recipient address, <strong>Jupiter</strong> optimizes the route (swap vs direct), <strong>Guardian</strong> runs 5 risk checks + LLM summary, user <strong>reviews</strong> the risk score, <strong>signs</strong> via vault (instant) or MWA (wallet popup), then USDC is <strong>transferred</strong> on-chain." aria-label="Slide 4 of 12">
     <span class="slide-label stagger">How It Works</span>
     <h2 class="slide-title stagger" style="font-size: clamp(26px, 3.2vw, 38px);">End-to-End Payment Flow</h2>
     <div class="zigzag-flow stagger" style="margin-top: 32px;">
@@ -581,7 +581,7 @@ h1, h2, h3 { font-family: 'Clash Display', 'General Sans', sans-serif; }
   </section>
 
   <!-- ═══ SLIDE 5: ARCHITECTURE ═══ -->
-  <section class="slide slide-below" data-slide="4" data-notes="Three-layer architecture. <strong>PhasmaPay App</strong> is an Expo bare workflow Android app. Four core modules: NFC Manager, Tap Vault, AI Guardian, and SKR/Cashback. Service layer handles escrow and payment logic. Everything talks to <strong>Solana Devnet</strong> via Helius RPC, where our Anchor program and SKR token live. Solana Actions endpoint enables Blink-based claiming." aria-label="Slide 5 of 11">
+  <section class="slide slide-below" data-slide="4" data-notes="Three-layer architecture. <strong>PhasmaPay App</strong> is an Expo bare workflow Android app. Four core modules: NFC Manager, Tap Vault, AI Guardian, and SKR/Cashback. Service layer handles escrow and payment logic. Everything talks to <strong>Solana Devnet</strong> via Helius RPC, where our Anchor program and SKR token live. Solana Actions endpoint enables Blink-based claiming." aria-label="Slide 5 of 12">
     <span class="slide-label stagger">Architecture</span>
     <h2 class="slide-title stagger" style="font-size: clamp(26px, 3.2vw, 38px);">System Design</h2>
     <div class="arch-layers stagger" style="margin-top: 24px;">
@@ -672,7 +672,7 @@ h1, h2, h3 { font-family: 'Clash Display', 'General Sans', sans-serif; }
   </section>
 
   <!-- ═══ SLIDE 6: KEY FEATURES ═══ -->
-  <section class="slide slide-below" data-slide="5" data-notes="Deep dive into 5 key features: <strong>Ghost Mode</strong> for private payments via escrow PDAs, <strong>SKR Tiers</strong> for loyalty and progressive benefits, <strong>Yield</strong> on idle USDC via Kamino lending, <strong>AI Route Optimization</strong> via Jupiter, and <strong>Solana Actions/Blinks</strong> for cross-client claiming." aria-label="Slide 6 of 11">
+  <section class="slide slide-below" data-slide="5" data-notes="Deep dive into 5 key features: <strong>Ghost Mode</strong> for private payments via escrow PDAs, <strong>SKR Tiers</strong> for loyalty and progressive benefits, <strong>Yield</strong> on idle USDC via Kamino lending, <strong>AI Route Optimization</strong> via Jupiter, and <strong>Solana Actions/Blinks</strong> for cross-client claiming." aria-label="Slide 6 of 12">
     <span class="slide-label stagger">Key Features</span>
     <h2 class="slide-title stagger" style="font-size: clamp(26px, 3.2vw, 38px);">Feature Deep Dive</h2>
     <div class="feature-grid stagger" style="margin-top: 24px;">
@@ -720,8 +720,75 @@ h1, h2, h3 { font-family: 'Clash Display', 'General Sans', sans-serif; }
     </div>
   </section>
 
-  <!-- ═══ SLIDE 7: AI GUARDIAN ═══ -->
-  <section class="slide slide-below" data-slide="6" data-notes="The AI Guardian runs 5 sequential on-chain checks: <strong>account exists</strong>, <strong>transaction history</strong>, <strong>account age</strong>, <strong>known recipient</strong>, and <strong>amount anomaly</strong>. Each check is weighted and combined into a score 0-100. Results feed into an LLM that generates a plain-English risk summary. Green (≥70) is safe, yellow (40-70) is caution, red (<40) is danger. Gold SKR tier + green = auto-approve with no confirmation needed." aria-label="Slide 7 of 11">
+  <!-- ═══ SLIDE 7: YIELD FLYWHEEL ═══ -->
+  <section class="slide slide-below" data-slide="6" data-notes="The Yield Flywheel is what makes PhasmaPay self-sustaining. Idle USDC sitting in vaults and unclaimed ghost payments is pooled into a single shared PDA vault and deposited into Kamino USDC lending at ~7% APY. The yield generated funds all SKR cashback rewards — no treasury subsidies needed. More payments → more idle USDC → more yield → more cashback → incentivizes more payments. Ghost payments are uniquely powerful here: funds earn yield while the recipient hasn't claimed yet. One shared protocol vault means zero per-user rent overhead." aria-label="Slide 7 of 12">
+    <span class="slide-label stagger">Economics</span>
+    <h2 class="slide-title stagger" style="font-size: clamp(26px, 3.2vw, 38px);">Yield Flywheel</h2>
+    <p class="slide-subtitle stagger">Idle USDC funds the entire rewards system — no subsidies needed</p>
+
+    <!-- Flywheel diagram -->
+    <div class="stagger" style="margin-top: 28px; display: flex; flex-direction: column; align-items: center; gap: 20px; max-width: 900px;">
+
+      <!-- Sources row -->
+      <div style="display: flex; gap: 16px; flex-wrap: wrap; justify-content: center;">
+        <div class="card" style="padding: 16px 20px; text-align: center; min-width: 180px; border-color: rgba(139,92,246,0.2);">
+          <div class="icon-box purple" style="margin: 0 auto 8px;">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#A78BFA" stroke-width="2" stroke-linecap="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+          </div>
+          <div style="font-size: 14px; font-weight: 600; color: #fff;">Tap Vault</div>
+          <div style="font-size: 11px; color: var(--muted); margin-top: 2px;">Pre-loaded USDC<br>sitting between payments</div>
+        </div>
+        <div class="card" style="padding: 16px 20px; text-align: center; min-width: 180px; border-color: rgba(236,72,153,0.2);">
+          <div class="icon-box pink" style="margin: 0 auto 8px;">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ec4899" stroke-width="2" stroke-linecap="round"><path d="M12 4C8 4 4 8 4 14v4c0 1 .5 2 1.5 2s1.5-1 2-2 1-2 2-2 1.5 1 2 2 1 2 2 2 1.5-1 1.5-2v-4c0-6-4-10-8-10z"/><circle cx="10" cy="12" r="1.5" fill="#ec4899"/><circle cx="14" cy="12" r="1.5" fill="#ec4899"/></svg>
+          </div>
+          <div style="font-size: 14px; font-weight: 600; color: #fff;">Unclaimed Ghost</div>
+          <div style="font-size: 11px; color: var(--muted); margin-top: 2px;">Escrow funds earning yield<br>until recipient claims</div>
+        </div>
+      </div>
+
+      <!-- Arrow down -->
+      <svg width="24" height="32" viewBox="0 0 24 32" fill="none" stroke="var(--purple-light)" stroke-width="2" stroke-linecap="round"><path d="M12 0v28M6 22l6 6 6-6"/></svg>
+
+      <!-- Kamino box -->
+      <div class="card" style="padding: 16px 32px; text-align: center; border-color: rgba(74,222,128,0.2); background: rgba(74,222,128,0.04);">
+        <div style="font-size: 13px; font-weight: 700; color: var(--green); letter-spacing: 1px;">SHARED PDA VAULT → KAMINO USDC LENDING</div>
+        <div style="font-size: 22px; font-weight: 700; color: #fff; margin-top: 4px;">~7% APY</div>
+        <div style="font-size: 11px; color: var(--muted); margin-top: 2px;">One protocol account — zero per-user rent</div>
+      </div>
+
+      <!-- Arrow down -->
+      <svg width="24" height="32" viewBox="0 0 24 32" fill="none" stroke="var(--green)" stroke-width="2" stroke-linecap="round"><path d="M12 0v28M6 22l6 6 6-6"/></svg>
+
+      <!-- Output row -->
+      <div style="display: flex; gap: 16px; flex-wrap: wrap; justify-content: center;">
+        <div class="card" style="padding: 16px 20px; text-align: center; min-width: 160px; border-color: rgba(245,158,11,0.2);">
+          <div class="icon-box amber" style="margin: 0 auto 8px;">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          </div>
+          <div style="font-size: 14px; font-weight: 600; color: #fff;">SKR Cashback</div>
+          <div style="font-size: 11px; color: var(--muted); margin-top: 2px;">Funded entirely by yield<br>0.5% – 3% per payment</div>
+        </div>
+        <div class="card" style="padding: 16px 20px; text-align: center; min-width: 160px; border-color: rgba(56,189,248,0.2);">
+          <div class="icon-box cyan" style="margin: 0 auto 8px;">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2" stroke-linecap="round"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
+          </div>
+          <div style="font-size: 14px; font-weight: 600; color: #fff;">More Payments</div>
+          <div style="font-size: 11px; color: var(--muted); margin-top: 2px;">Better rewards attract<br>more users + volume</div>
+        </div>
+      </div>
+
+      <!-- Key insight -->
+      <div class="card stagger" style="padding: 12px 20px; border-color: rgba(139,92,246,0.15); max-width: 600px; text-align: center;">
+        <div style="font-size: 12px; color: var(--muted-strong); line-height: 1.6;">
+          <strong style="color: var(--purple-light);">Key insight:</strong> Ghost payments earn yield for the sender while unclaimed — the longer it takes to claim, the more yield accrues. Rent from closed ephemeral ATAs is reclaimed on sweep.
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ SLIDE 8: AI GUARDIAN ═══ -->
+  <section class="slide slide-below" data-slide="7" data-notes="The AI Guardian runs 5 sequential on-chain checks: <strong>account exists</strong>, <strong>transaction history</strong>, <strong>account age</strong>, <strong>known recipient</strong>, and <strong>amount anomaly</strong>. Each check is weighted and combined into a score 0-100. Results feed into an LLM that generates a plain-English risk summary. Green (≥70) is safe, yellow (40-70) is caution, red (<40) is danger. Gold SKR tier + green = auto-approve with no confirmation needed." aria-label="Slide 7 of 12">
     <span class="slide-label stagger">AI Integration</span>
     <h2 class="slide-title stagger" style="font-size: clamp(26px, 3.2vw, 38px);">AI Guardian Risk Engine</h2>
     <p class="slide-subtitle stagger">5 sequential checks + LLM summary before every payment</p>
@@ -806,7 +873,7 @@ h1, h2, h3 { font-family: 'Clash Display', 'General Sans', sans-serif; }
   </section>
 
   <!-- ═══ SLIDE 8: SKR TOKEN ECONOMY ═══ -->
-  <section class="slide slide-below" data-slide="7" data-notes="SKR is a real SPL token on devnet. Four tiers based on balance: <strong>Ghost</strong> (0 SKR), <strong>Bronze</strong> (10+), <strong>Silver</strong> (100+), <strong>Gold</strong> (1000+). Higher tiers unlock better cashback rates, higher daily vault limits, and Gold tier gets auto-approve on green risk scores — completely skipping the confirmation step." aria-label="Slide 8 of 11">
+  <section class="slide slide-below" data-slide="8" data-notes="SKR is a real SPL token on devnet. Four tiers based on balance: <strong>Ghost</strong> (0 SKR), <strong>Bronze</strong> (10+), <strong>Silver</strong> (100+), <strong>Gold</strong> (1000+). Higher tiers unlock better cashback rates, higher daily vault limits, and Gold tier gets auto-approve on green risk scores — completely skipping the confirmation step." aria-label="Slide 9 of 12">
     <span class="slide-label stagger">Token Economy</span>
     <h2 class="slide-title stagger" style="font-size: clamp(26px, 3.2vw, 38px);">SKR Tier System</h2>
     <p class="slide-subtitle stagger">Real SPL token on devnet &mdash; earn through payments, unlock progressive benefits</p>
@@ -862,7 +929,7 @@ h1, h2, h3 { font-family: 'Clash Display', 'General Sans', sans-serif; }
   </section>
 
   <!-- ═══ SLIDE 9: LIVE DEMO ═══ -->
-  <section class="slide slide-below" data-slide="8" data-notes="Everything works on real hardware: <strong>Oppo Reno 14 Pro</strong> as the primary device with NFC, <strong>Poco X3</strong> for merchant testing. Download the APK, install on any Android with NFC + Phantom, and you can tap-to-pay on Solana devnet right now. Demo video shows the full flow end-to-end." aria-label="Slide 9 of 11">
+  <section class="slide slide-below" data-slide="9" data-notes="Everything works on real hardware: <strong>Oppo Reno 14 Pro</strong> as the primary device with NFC, <strong>Poco X3</strong> for merchant testing. Download the APK, install on any Android with NFC + Phantom, and you can tap-to-pay on Solana devnet right now. Demo video shows the full flow end-to-end." aria-label="Slide 10 of 12">
     <span class="slide-label stagger">Live Demo</span>
     <h2 class="slide-title stagger" style="font-size: clamp(26px, 3.2vw, 38px);">Working on Real Hardware</h2>
     <div class="grid-2 stagger" style="margin-top: 24px; max-width: 900px;">
@@ -921,7 +988,7 @@ h1, h2, h3 { font-family: 'Clash Display', 'General Sans', sans-serif; }
   </section>
 
   <!-- ═══ SLIDE 10: TECH STACK ═══ -->
-  <section class="slide slide-below" data-slide="9" data-notes="Full-stack Solana mobile project: Anchor 0.31 on-chain program, React Native + Expo bare workflow, MWA v2 for Phantom integration, native NFC with HCE support, Jupiter v6 for route optimization, Solana Actions v2.1.3 for Blink compatibility, and Helius RPC for reliable devnet access. 1 on-chain program, 7+ services." aria-label="Slide 10 of 11">
+  <section class="slide slide-below" data-slide="10" data-notes="Full-stack Solana mobile project: Anchor 0.31 on-chain program, React Native + Expo bare workflow, MWA v2 for Phantom integration, native NFC with HCE support, Jupiter v6 for route optimization, Solana Actions v2.1.3 for Blink compatibility, and Helius RPC for reliable devnet access. 1 on-chain program, 7+ services." aria-label="Slide 11 of 12">
     <span class="slide-label stagger">Tech Stack</span>
     <h2 class="slide-title stagger" style="font-size: clamp(26px, 3.2vw, 38px);">Built With</h2>
     <div class="tech-grid stagger" style="margin-top: 28px;">
@@ -974,7 +1041,7 @@ h1, h2, h3 { font-family: 'Clash Display', 'General Sans', sans-serif; }
   </section>
 
   <!-- ═══ SLIDE 11: THANK YOU ═══ -->
-  <section class="slide slide-below" data-slide="10" data-notes="Thank you! PhasmaPay demonstrates that NFC tap-to-pay with AI risk analysis is a viable payment UX on Solana. One program, 7+ services, working on real hardware. Download the APK and try it now." aria-label="Slide 11 of 11">
+  <section class="slide slide-below" data-slide="11" data-notes="Thank you! PhasmaPay demonstrates that NFC tap-to-pay with AI risk analysis is a viable payment UX on Solana. One program, 7+ services, working on real hardware. Download the APK and try it now." aria-label="Slide 12 of 12">
     <img src="./assets/icon.png" alt="PhasmaPay" class="title-logo stagger" style="width: 64px; height: 64px; border-radius: 16px;">
     <h2 class="title-name stagger" style="font-size: clamp(36px, 5vw, 56px);">PhasmaPay</h2>
     <p class="slide-subtitle stagger" style="margin-top: 8px;">Tap. Review. Done.</p>
