@@ -5,6 +5,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useWallet } from '../../src/context/WalletContext';
 import { SOLANA_NETWORK } from '../../src/utils/constants';
 import { shortAddress } from '../../src/utils/solana';
+import { router } from 'expo-router';
 import { useMode } from '../../src/context/ModeContext';
 import { colors, space, radius } from '../../src/design/tokens';
 
@@ -94,6 +95,19 @@ export default function SettingsScreen() {
               </Text>
             </View>
           </TouchableOpacity>
+          <View style={{ height: 8 }} />
+        </View>
+
+        <View style={{ backgroundColor: colors.surface0, borderRadius: 16, paddingHorizontal: 16, marginBottom: 16, elevation: 1 }}>
+          <Text style={{ color: colors.textSub, fontSize: 11, fontWeight: '600', letterSpacing: 1, paddingTop: 14, paddingBottom: 4 }}>
+            VAULT
+          </Text>
+          <SettingRow
+            label="Tap Vault"
+            value="Manage >"
+            onPress={() => router.push('/vault')}
+            accent={colors.green}
+          />
           <View style={{ height: 8 }} />
         </View>
 

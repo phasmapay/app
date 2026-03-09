@@ -10,7 +10,7 @@ import { explorerUrl } from '../../src/utils/solana';
 import { SOLANA_NETWORK } from '../../src/utils/constants';
 import { SkrTierBadge } from '../../src/components/SkrTierBadge';
 import { getSkrTier, SkrTier } from '../../src/services/skr';
-import { colors } from '../../src/design/tokens';
+import { colors, radius } from '../../src/design/tokens';
 
 export default function ReceiptScreen() {
   const params = useLocalSearchParams<{
@@ -22,6 +22,7 @@ export default function ReceiptScreen() {
     received: string;
     skrBalance: string;
     cashbackSig: string;
+    ghostMode: string;
   }>();
 
   const amount = parseFloat(params.amount ?? '0');
@@ -29,6 +30,7 @@ export default function ReceiptScreen() {
   const savedGas = parseFloat(params.savedGas ?? '0');
   const skrBalance = parseFloat(params.skrBalance ?? '0');
   const isReceived = params.received === 'true';
+  const isGhost = params.ghostMode === 'true';
   const cashbackSig = params.cashbackSig || null;
 
   const skrStatus = getSkrTier(skrBalance);
@@ -82,11 +84,19 @@ export default function ReceiptScreen() {
           textShadowOffset: { width: 0, height: 0 },
           textShadowRadius: 20,
         }}>
-          {isReceived ? 'Payment Received!' : 'Payment Sent!'}
+          {isGhost && isReceived ? 'Ghost Payment Received!' : isGhost ? 'Ghost Payment Sent!' : isReceived ? 'Payment Received!' : 'Payment Sent!'}
         </Text>
         <Text style={{ color: colors.textSub, fontSize: 14, marginTop: 8 }}>
           {isReceived ? 'USDC arrived in your wallet' : 'Transaction confirmed on Solana'}
         </Text>
+        {isGhost && (
+          <View style={{
+            backgroundColor: colors.ghostDim, paddingHorizontal: 10, paddingVertical: 4,
+            borderRadius: radius.sm, marginTop: 8,
+          }}>
+            <Text style={{ color: colors.ghost, fontSize: 11, fontWeight: '700' }}>GHOST MODE</Text>
+          </View>
+        )}
 
         <View style={{
           width: '100%', backgroundColor: colors.surface1, borderRadius: 24,

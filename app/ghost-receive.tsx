@@ -290,6 +290,18 @@ export default function GhostReceiveScreen() {
               >
                 <Text style={{ color: '#fff', fontWeight: '700', fontSize: 17 }}>Claim to Wallet</Text>
               </TouchableOpacity>
+              <TouchableOpacity
+                style={{
+                  backgroundColor: colors.surface2, borderRadius: 16,
+                  paddingVertical: 16, alignItems: 'center', marginTop: 10,
+                }}
+                onPress={() => router.replace('/')}
+              >
+                <Text style={{ color: colors.textSub, fontWeight: '600', fontSize: 15 }}>Claim Later</Text>
+              </TouchableOpacity>
+              <Text style={{ color: colors.textMute, fontSize: 11, textAlign: 'center', marginTop: 8 }}>
+                Funds are safe. Find them on the Claimable screen.
+              </Text>
             </View>
           )}
 

@@ -102,11 +102,14 @@ export default function VaultScreen() {
   const handleInit = async () => {
     setLoading(true);
     try {
+      console.log('[Vault] initializing...');
       const cfg = await initializeVault();
+      console.log('[Vault] initialized:', cfg.publicKey);
       setConfig(cfg);
       setLimitInput(cfg.dailyLimit.toString());
-    } catch (e) {
-      Alert.alert('Error', 'Failed to initialize vault');
+    } catch (e: any) {
+      console.error('[Vault] init failed:', e);
+      Alert.alert('Error', `Failed to initialize vault: ${e?.message || String(e)}`);
     }
     setLoading(false);
   };

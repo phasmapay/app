@@ -186,6 +186,7 @@ export default function ClaimableScreen() {
           cashback: '0',
           savedGas: '0',
           received: 'true',
+          ghostMode: 'true',
         },
       });
     } catch (err: unknown) {
