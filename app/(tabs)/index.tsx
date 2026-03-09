@@ -234,8 +234,6 @@ export default function HomeScreen() {
     );
   }
 
-  const maskedUsdc = usdc.toFixed(2).replace(/\d/g, '\u2022');
-
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.base }}>
       <ScrollView
@@ -300,10 +298,11 @@ export default function HomeScreen() {
           </TouchableOpacity>
         )}
 
-        {/* 2. Balance Card */}
+        {/* 2. Balance Card — unified financial dashboard */}
         <GlassCard glow={colors.purple} style={{ padding: space.xl, marginBottom: space.lg }}>
+          {/* Header */}
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-            <Text style={{ ...type.label, color: colors.textSub }}>AVAILABLE BALANCE</Text>
+            <Text style={{ ...type.label, color: colors.textSub }}>TOTAL BALANCE</Text>
             <TouchableOpacity onPress={toggleBalanceVisibility} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
               {homeData.balanceHidden
                 ? <EyeOffIcon size={20} color={colors.textSub} />
@@ -311,23 +310,101 @@ export default function HomeScreen() {
               }
             </TouchableOpacity>
           </View>
+
+          {/* Hero amount — wallet + vault combined */}
           {isLoading ? (
             <ActivityIndicator color={colors.purple} style={{ marginVertical: 20 }} />
           ) : (
             <View style={{ marginTop: 8 }}>
               <View style={{ position: 'relative' }}>
                 <Animated.Text style={[{ ...type.amountHero, color: colors.text }, realStyle]}>
-                  ${usdc.toFixed(2)}
+                  ${(usdc + (homeData.vaultConfig?.enabled ? homeData.vaultBalance : 0)).toFixed(2)}
                 </Animated.Text>
                 <Animated.Text style={[{ ...type.amountHero, color: colors.text }, maskedStyle]}>
-                  ${maskedUsdc}
+                  ${(usdc + (homeData.vaultConfig?.enabled ? homeData.vaultBalance : 0)).toFixed(2).replace(/\d/g, '\u2022')}
                 </Animated.Text>
               </View>
               <Text style={{ color: colors.textMute, fontSize: 13, marginTop: 4 }}>USDC</Text>
             </View>
           )}
 
-          {/* SKR tier strip inside balance card */}
+          {/* Wallet / Vault split */}
+          <View style={{ height: StyleSheet.hairlineWidth, backgroundColor: colors.border, marginTop: 16 }} />
+          <View style={{ flexDirection: 'row', marginTop: 14, gap: 10 }}>
+            {/* Wallet pill */}
+            <View style={{
+              flex: 1, backgroundColor: colors.purpleDim, borderRadius: radius.md,
+              paddingVertical: 10, paddingHorizontal: 12,
+            }}>
+              <Text style={{ color: colors.textSub, fontSize: 9, fontWeight: '700', letterSpacing: 1, textTransform: 'uppercase' }}>
+                Wallet
+              </Text>
+              <Text style={{ color: colors.text, fontSize: 17, fontWeight: '700', marginTop: 4 }}>
+                {homeData.balanceHidden ? '$\u2022\u2022\u2022' : `$${usdc.toFixed(2)}`}
+              </Text>
+            </View>
+
+            {/* Vault pill */}
+            {homeData.vaultConfig?.enabled ? (
+              <TouchableOpacity
+                style={{
+                  flex: 1, backgroundColor: colors.greenDim, borderRadius: radius.md,
+                  paddingVertical: 10, paddingHorizontal: 12,
+                }}
+                onPress={() => router.push('/vault')}
+                activeOpacity={0.7}
+              >
+                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <Text style={{ color: colors.textSub, fontSize: 9, fontWeight: '700', letterSpacing: 1, textTransform: 'uppercase' }}>
+                    Vault
+                  </Text>
+                  <VaultIcon size={12} color={colors.green} />
+                </View>
+                <Text style={{ color: colors.text, fontSize: 17, fontWeight: '700', marginTop: 4 }}>
+                  {homeData.balanceHidden ? '$\u2022\u2022\u2022' : `$${homeData.vaultBalance.toFixed(2)}`}
+                </Text>
+                {/* Daily limit bar */}
+                <View style={{ marginTop: 6 }}>
+                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 3 }}>
+                    <Text style={{ color: colors.green, fontSize: 9, fontWeight: '600' }}>
+                      ${(homeData.vaultConfig.dailyLimit - homeData.vaultConfig.spentToday).toFixed(0)} left
+                    </Text>
+                    <Text style={{ color: colors.textMute, fontSize: 9 }}>
+                      ${homeData.vaultConfig.dailyLimit}/day
+                    </Text>
+                  </View>
+                  <View style={{ height: 3, backgroundColor: 'rgba(16,185,129,0.15)', borderRadius: 2, overflow: 'hidden' }}>
+                    <View style={{
+                      height: '100%', borderRadius: 2, backgroundColor: colors.green,
+                      width: `${Math.min((homeData.vaultConfig.spentToday / homeData.vaultConfig.dailyLimit) * 100, 100)}%`,
+                    }} />
+                  </View>
+                </View>
+              </TouchableOpacity>
+            ) : (
+              <TouchableOpacity
+                style={{
+                  flex: 1, backgroundColor: colors.surface1, borderRadius: radius.md,
+                  paddingVertical: 10, paddingHorizontal: 12,
+                  borderWidth: 1, borderColor: colors.border, borderStyle: 'dashed',
+                }}
+                onPress={() => router.push('/vault')}
+                activeOpacity={0.7}
+              >
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  <VaultIcon size={12} color={colors.textMute} />
+                  <Text style={{ color: colors.textSub, fontSize: 11, fontWeight: '600', marginLeft: 6 }}>
+                    Set up Vault
+                  </Text>
+                </View>
+                <Text style={{ color: colors.textMute, fontSize: 10, marginTop: 4, lineHeight: 14 }}>
+                  Instant tap-to-pay
+                </Text>
+              </TouchableOpacity>
+            )}
+          </View>
+
+          {/* SKR tier strip */}
           <View style={{ height: StyleSheet.hairlineWidth, backgroundColor: colors.border, marginTop: 14 }} />
           <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 12 }}>
             <View style={{
@@ -406,56 +483,7 @@ export default function HomeScreen() {
           </View>
         </GlassCard>
 
-        {/* 5. Vault Card */}
-        {homeData.vaultConfig?.enabled ? (
-          <TouchableOpacity onPress={() => router.push('/vault')} activeOpacity={0.7}>
-            <GlassCard glow={colors.green} style={{ padding: space.base, marginBottom: space.base }}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                  <VaultIcon size={20} color={colors.green} />
-                  <View style={{ marginLeft: 12 }}>
-                    <Text style={{ color: colors.text, fontWeight: '700', fontSize: 15 }}>Tap Vault</Text>
-                    <Text style={{ color: colors.textSub, fontSize: 11, marginTop: 2 }}>
-                      ${homeData.vaultBalance.toFixed(2)} USDC
-                    </Text>
-                  </View>
-                </View>
-                <View style={{ alignItems: 'flex-end' }}>
-                  <Text style={{ color: colors.green, fontWeight: '600', fontSize: 13 }}>
-                    ${(homeData.vaultConfig.dailyLimit - homeData.vaultConfig.spentToday).toFixed(2)} left
-                  </Text>
-                  <Text style={{ color: colors.textSub, fontSize: 10 }}>
-                    of ${homeData.vaultConfig.dailyLimit} daily
-                  </Text>
-                </View>
-              </View>
-              {/* Progress bar */}
-              <View style={{ height: 3, backgroundColor: colors.surface2, borderRadius: 2, marginTop: 10, overflow: 'hidden' }}>
-                <View style={{
-                  height: '100%', borderRadius: 2, backgroundColor: colors.green,
-                  width: `${Math.min((homeData.vaultConfig.spentToday / homeData.vaultConfig.dailyLimit) * 100, 100)}%`,
-                }} />
-              </View>
-            </GlassCard>
-          </TouchableOpacity>
-        ) : isConnected && (
-          <TouchableOpacity onPress={() => router.push('/vault')} activeOpacity={0.7}>
-            <GlassCard style={{ padding: space.base, marginBottom: space.base }}>
-              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                <VaultIcon size={20} color={colors.textSub} />
-                <View style={{ marginLeft: 12, flex: 1 }}>
-                  <Text style={{ color: colors.text, fontWeight: '700', fontSize: 15 }}>Set Up Tap Vault</Text>
-                  <Text style={{ color: colors.textSub, fontSize: 11, marginTop: 2 }}>
-                    Instant payments — no wallet popups
-                  </Text>
-                </View>
-                <Text style={{ color: colors.purple, fontSize: 22 }}>›</Text>
-              </View>
-            </GlassCard>
-          </TouchableOpacity>
-        )}
-
-        {/* 6. Claimable Banner */}
+        {/* 5. Claimable Banner */}
         {homeData.claimableCount > 0 && (
           <TouchableOpacity
             style={{

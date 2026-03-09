@@ -11,9 +11,9 @@ import * as SecureStore from 'expo-secure-store';
 import { USDC_MINT, USDC_DECIMALS, SKR_VAULT_CEILINGS } from '../utils/constants';
 import type { SkrTier } from './skr';
 
-const VAULT_SOL_RESERVE = 0.005; // SOL kept in vault for tx fees
+const VAULT_SOL_RESERVE = 0.01; // SOL kept in vault for tx fees + ATA rent
 
-const VAULT_SK_KEY = 'phasma:vault_sk';
+const VAULT_SK_KEY = 'phasma_vault_sk';
 const VAULT_CONFIG_KEY = 'phasma:vault_config';
 
 export type VaultConfig = {
