@@ -28,13 +28,13 @@ function todayString(): string {
   return new Date().toISOString().slice(0, 10);
 }
 
-export async function initializeVault(): Promise<VaultConfig> {
+export async function initializeVault(tier: SkrTier = 'Ghost'): Promise<VaultConfig> {
   const keypair = Keypair.generate();
   await SecureStore.setItemAsync(VAULT_SK_KEY, JSON.stringify(Array.from(keypair.secretKey)));
 
   const config: VaultConfig = {
     publicKey: keypair.publicKey.toBase58(),
-    dailyLimit: 25,
+    dailyLimit: SKR_VAULT_CEILINGS[tier],
     spentToday: 0,
     lastResetDate: todayString(),
     enabled: true,
@@ -123,6 +123,16 @@ export async function setDailyLimitWithTier(limit: number, tier: SkrTier): Promi
   const actual = capped ? ceiling : limit;
   await setDailyLimit(actual);
   return { set: actual, capped, ceiling };
+}
+
+export async function syncLimitWithTier(tier: SkrTier): Promise<void> {
+  const config = await getVaultConfig();
+  if (!config) return;
+  const ceiling = SKR_VAULT_CEILINGS[tier];
+  if (config.dailyLimit !== ceiling) {
+    config.dailyLimit = ceiling;
+    await saveVaultConfig(config);
+  }
 }
 
 export async function recordSpend(amount: number): Promise<void> {

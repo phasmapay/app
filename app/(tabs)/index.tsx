@@ -22,7 +22,7 @@ import {
   ArrowUpIcon, ArrowDownIcon, GhostPayIcon, GhostReceiveIcon,
   GhostIcon, VaultIcon, SettingsIcon, EyeIcon, EyeOffIcon,
 } from '../../src/components/Icons';
-import { getVaultConfig, getVaultBalance, VaultConfig } from '../../src/services/vault';
+import { getVaultConfig, getVaultBalance, syncLimitWithTier, VaultConfig } from '../../src/services/vault';
 import { getTransactions, StoredTransaction } from '../../src/services/storage';
 import { relativeTime } from '../../src/utils/time';
 
@@ -171,6 +171,12 @@ export default function HomeScreen() {
 
         const bal = cfg ? await getVaultBalance(getConnection()).catch(() => 0) : 0;
         if (cancelled) return;
+
+        // Sync vault daily limit with current SKR tier
+        if (cfg?.enabled && skrStatus.tier) {
+          await syncLimitWithTier(skrStatus.tier).catch(() => {});
+          cfg.dailyLimit = (await getVaultConfig().catch(() => null))?.dailyLimit ?? cfg.dailyLimit;
+        }
 
         const hidden = hiddenRaw === 'true';
         blur.value = hidden ? 1 : 0;

@@ -103,7 +103,7 @@ export default function VaultScreen() {
     setLoading(true);
     try {
       console.log('[Vault] initializing...');
-      const cfg = await initializeVault();
+      const cfg = await initializeVault(skrStatus.tier);
       console.log('[Vault] initialized:', cfg.publicKey);
       setConfig(cfg);
       setLimitInput(cfg.dailyLimit.toString());
