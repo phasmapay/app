@@ -223,26 +223,9 @@ export default function ReceiveScreen() {
               <Text style={{ color: colors.green, fontSize: 16, fontWeight: '600', marginBottom: 8 }}>
                 Tap customer's phone to receive ${parseFloat(amount).toFixed(2)}
               </Text>
-              <Text style={{ color: colors.textMute, fontSize: 12, marginBottom: 24 }}>
+              <Text style={{ color: colors.textMute, fontSize: 12 }}>
                 Hold phones back-to-back
               </Text>
-              {publicKey && amount && (
-                <TouchableOpacity
-                  style={{
-                    borderRadius: 16, paddingVertical: 16, paddingHorizontal: 32, alignItems: 'center',
-                    backgroundColor: colors.surface0, borderWidth: 1, borderColor: colors.green, elevation: 1,
-                  }}
-                  onPress={() => {
-                    const { url } = buildSolanaPayUrl(publicKey.toBase58(), parseFloat(amount));
-                    Share.share({
-                      message: `Pay me $${parseFloat(amount).toFixed(2)} USDC via PhasmaPay:\n${url}`,
-                      url,
-                    });
-                  }}
-                >
-                  <Text style={{ color: colors.green, fontWeight: '600' }}>Share Payment Link</Text>
-                </TouchableOpacity>
-              )}
             </View>
           ) : null}
 
@@ -253,12 +236,35 @@ export default function ReceiveScreen() {
           {receivedAmount === null && (
             <View style={{ position: 'absolute', bottom: 90, left: 20, right: 20 }}>
               {isReady ? (
-                <TouchableOpacity
-                  style={{ backgroundColor: colors.surface2, borderRadius: 18, paddingVertical: 20, alignItems: 'center' }}
-                  onPress={handleStop}
-                >
-                  <Text style={{ color: colors.textSub, fontWeight: '700', fontSize: 17 }}>Stop</Text>
-                </TouchableOpacity>
+                <View style={{ flexDirection: 'row', gap: 10 }}>
+                  {publicKey && amount && (
+                    <TouchableOpacity
+                      style={{
+                        flex: 1, backgroundColor: colors.surface0, borderRadius: 18,
+                        paddingVertical: 20, alignItems: 'center',
+                        borderWidth: 1, borderColor: colors.green,
+                      }}
+                      onPress={() => {
+                        const { url } = buildSolanaPayUrl(publicKey.toBase58(), parseFloat(amount));
+                        Share.share({
+                          message: `Pay me $${parseFloat(amount).toFixed(2)} USDC via PhasmaPay:\n${url}`,
+                          url,
+                        });
+                      }}
+                    >
+                      <Text style={{ color: colors.green, fontWeight: '700', fontSize: 15 }}>Share Link</Text>
+                    </TouchableOpacity>
+                  )}
+                  <TouchableOpacity
+                    style={{
+                      flex: 1, backgroundColor: colors.surface2, borderRadius: 18,
+                      paddingVertical: 20, alignItems: 'center',
+                    }}
+                    onPress={handleStop}
+                  >
+                    <Text style={{ color: colors.textSub, fontWeight: '700', fontSize: 15 }}>Stop</Text>
+                  </TouchableOpacity>
+                </View>
               ) : (
                 <TouchableOpacity
                   style={{
