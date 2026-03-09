@@ -55,7 +55,7 @@ export function useBalances(walletAddress: string | null): Balances {
       setSol(solBal);
       setSkrStatus(getSkrTier(skrBal));
     } catch (err) {
-      console.error('Balance fetch failed (primary RPC):', err);
+      console.warn('Balance fetch failed (primary RPC):', err);
       // Retry with public devnet RPC as fallback
       resetConnection();
       try {
@@ -65,7 +65,7 @@ export function useBalances(walletAddress: string | null): Balances {
         setSol(solBal);
         setSkrStatus(getSkrTier(skrBal));
       } catch (retryErr) {
-        console.error('Balance fetch failed (retry):', retryErr);
+        console.warn('Balance fetch failed (retry):', retryErr);
         setUsdc(0);
         setSol(0);
         setError('RPC unavailable — pull to retry');
