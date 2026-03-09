@@ -61,50 +61,54 @@ Full Actions spec v2.1.3. Escrow recipients can claim from any Blink-compatible 
 **Torque SDK**
 Every completed payment is tracked via Torque for loyalty campaign eligibility.
 
-## Payment Flow
-
-```
-idle → optimizing → guarding → awaiting_approval → signing → confirming → success
-```
-
-Guardian runs during `guarding`. The AI summary is visible before you hit confirm. Red risk turns the confirm button orange ("Proceed Anyway").
-
 ## Architecture
 
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│                        PhasmaPay App                            │
-│  (Expo bare workflow / React Native / Android)                  │
-│                                                                 │
-│  ┌──────────┐  ┌───────────┐  ┌──────────┐  ┌──────────────┐  │
-│  │ NFC/HCE  │  │ Tap Vault │  │ Guardian │  │ SKR/Cashback │  │
-│  │ Manager  │  │ (local KP)│  │ (AI Risk)│  │ (tiers)      │  │
-│  └────┬─────┘  └─────┬─────┘  └────┬─────┘  └──────┬───────┘  │
-│       │              │              │               │           │
-│  ┌────┴──────────────┴──────────────┴───────────────┴────────┐  │
-│  │          Escrow Service + Payment Service                 │  │
-│  │  buildCreateEscrowTx / buildClaimEscrowTx / USDC transfer │  │
-│  └──────────────────────────┬────────────────────────────────┘  │
-│                             │ MWA (Phantom) or local vault sign │
-└─────────────────────────────┼───────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────────┐
+│                         PhasmaPay App                               │
+│               Expo bare workflow · React Native · Android           │
+│                                                                     │
+│  ┌────────────┐  ┌────────────┐  ┌────────────┐  ┌──────────────┐  │
+│  │  NFC / HCE │  │  Tap Vault │  │ AI Guardian │  │ SKR/Cashback │  │
+│  │  read/write │  │  local KP  │  │  5-check +  │  │  4 tiers +   │  │
+│  │  phone-tap  │  │  daily lim │  │  LLM summary│  │  yield/claim │  │
+│  └──────┬─────┘  └──────┬─────┘  └──────┬─────┘  └──────┬───────┘  │
+│         │               │               │                │          │
+│  ┌──────┴───────────────┴───────────────┴────────────────┴───────┐  │
+│  │              Payment Service + Escrow Service                 │  │
+│  │    USDC transfer · Jupiter route optimization · Ghost escrow  │  │
+│  └──────────────────────────┬────────────────────────────────────┘  │
+│                             │                                       │
+│  ┌──────────────────────────┴────────────────────────────────────┐  │
+│  │              Signing Layer                                    │  │
+│  │    Vault (local keypair, instant) │ MWA v2 (Phantom popup)   │  │
+│  └──────────────────────────┬────────────────────────────────────┘  │
+└─────────────────────────────┼───────────────────────────────────────┘
                               │
                     ┌─────────▼──────────┐
                     │   Solana Devnet    │
-                    │  (Helius RPC)      │
-                    │                   │
+                    │  Helius RPC        │
+                    │                    │
                     │  phasma_escrow     │ ← Anchor 0.31
-                    │  AGXRYord...       │
-                    │                   │
-                    │  SKR SPL Token     │
-                    │  AD4ereCF...       │
+                    │  AGXRYord...       │   create/claim/refund
+                    │                    │
+                    │  SKR SPL Token     │ ← AD4ereCF...
+                    │  USDC (devnet)     │ ← 4zMMC9...
                     └────────┬──────────┘
                              │
                     ┌────────▼───────────┐
                     │  Solana Actions    │ ← api/server.ts
-                    │  /api/actions/pay  │
+                    │  /api/actions/pay  │   spec v2.1.3
                     └────────────────────┘
                              │
-                    Any Blink client (dial.to, wallets)
+              Any Blink client (dial.to, Phantom, Backpack)
+```
+
+### Payment Flow States
+
+```
+idle → optimizing → guarding → awaiting_approval → signing → confirming → success
+       (Jupiter)    (Guardian)   (user/auto)        (vault/MWA)  (on-chain)
 ```
 
 ## On-Chain Program
